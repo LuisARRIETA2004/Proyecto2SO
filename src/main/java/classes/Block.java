@@ -10,11 +10,10 @@ package classes;
  */
 	public class Block {
 
-		private int indice;             // La posición física en el arreglo del disco
-		private boolean ocupado;        // ¿Está libre o en uso?
-		private String propietario;     // Nombre del archivo dueño (útil para pintarlo en la GUI)
-		private int siguienteBloque;    // Puntero: Índice del siguiente bloque (-1 si es el final)
-
+		private int indice;         
+		private boolean ocupado;      
+		private String propietario;    
+		private int siguienteBloque;    
 		public Block(int indice) {
 			this.indice = indice;
 			this.ocupado = false;
@@ -22,7 +21,6 @@ package classes;
 			this.siguienteBloque = -1;  // -1 representará "Null" o "Fin del archivo"
 		}
 
-		// Getters y Setters...
 		public boolean isOcupado() {
 			return ocupado;
 		}
