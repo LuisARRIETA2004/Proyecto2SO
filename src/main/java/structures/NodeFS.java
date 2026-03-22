@@ -4,17 +4,22 @@
  */
 package structures;
 
+import java.util.concurrent.Semaphore;
+
 /**
  *
  * @author truenno
  */
 public class NodeFS {
+
 	private String nombre;
 	private boolean esDirectorio;
 	private String propietario; // Para saber si es del Administrador o Usuario
-
 	private int tamanoBloques;
 	private int bloqueInicial;
+	private int lectoresActivos = 0;
+	private Semaphore mutexLectores = new Semaphore(1);
+	private Semaphore lockEscritura = new Semaphore(1);
 
 	private NodeFS padre;
 	private NodeFS primerHijo;
@@ -59,6 +64,48 @@ public class NodeFS {
 			}
 			actual.siguienteHermano = nuevoHijo;
 		}
+	}
+
+	// Método para cuando un proceso quiere LEER
+	public boolean adquirirLockLectura() {
+		try {
+			mutexLectores.acquire();
+			lectoresActivos++;
+			if (lectoresActivos == 1) {
+				if (!lockEscritura.tryAcquire()) {
+					lectoresActivos--;
+					mutexLectores.release();
+					return false;
+				}
+			}
+			mutexLectores.release();
+			return true;
+		} catch (InterruptedException e) {
+			return false;
+		}
+	}
+
+	// Método para cuando un proceso quiere ESCRIBIR (Actualizar/Eliminar)
+	public boolean adquirirLockEscritura() {
+		return lockEscritura.tryAcquire();
+	}
+
+	// Liberar después de LEER
+	public void liberarLockLectura() {
+		try {
+			mutexLectores.acquire();
+			lectoresActivos--;
+			if (lectoresActivos == 0) {
+				lockEscritura.release();
+			}
+			mutexLectores.release();
+		} catch (InterruptedException e) {
+		}
+	}
+
+	// Liberar después de ESCRIBIR
+	public void liberarLockEscritura() {
+		lockEscritura.release();
 	}
 
 	public String getNombre() {
