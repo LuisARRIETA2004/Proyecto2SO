@@ -15,14 +15,12 @@ public class NodeFS {
 	private boolean esDirectorio;
 	private String propietario; // Para saber si es del Administrador o Usuario
 
-	// 2. Metadatos específicos de Archivos (Para el JTable / FAT)
-	private int tamanoBloques;  // 0 si es directorio
-	private int bloqueInicial;  // -1 si es directorio
+	private int tamanoBloques;  
+	private int bloqueInicial;  
 
-	// 3. Punteros Estructurales (¡La magia para evitar ArrayList!)
-	private NodeFS padre;             // Quién es la carpeta que lo contiene
-	private NodeFS primerHijo;        // Si es carpeta, apunta a su primer elemento
-	private NodeFS siguienteHermano;  // Apunta al siguiente elemento en la MISMA carpeta
+	private NodeFS padre;             
+	private NodeFS primerHijo;        
+	private NodeFS siguienteHermano;  
 
 	// Constructor para un DIRECTORIO
 	public NodeFS(String nombre, String propietario, NodeFS padre) {
@@ -48,7 +46,6 @@ public class NodeFS {
 		this.siguienteHermano = null;
 	}
 
-	// Lógica para agregar un elemento dentro de este nodo (si es directorio)
 	public void agregarHijo(NodeFS nuevoHijo) {
 		if (!this.esDirectorio) {
 			System.out.println("Error: No puedes agregar elementos a un archivo.");
@@ -64,10 +61,72 @@ public class NodeFS {
 			while (actual.siguienteHermano != null) {
 				actual = actual.siguienteHermano;
 			}
-			// Lo enganchamos al final
 			actual.siguienteHermano = nuevoHijo;
 		}
 	}
 
-	// --- Agrega los Getters y Setters necesarios (getNombre(), isDirectorio(), etc.) ---
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	public boolean isEsDirectorio() {
+		return esDirectorio;
+	}
+
+	public void setEsDirectorio(boolean esDirectorio) {
+		this.esDirectorio = esDirectorio;
+	}
+
+	public String getPropietario() {
+		return propietario;
+	}
+
+	public void setPropietario(String propietario) {
+		this.propietario = propietario;
+	}
+
+	public int getTamanoBloques() {
+		return tamanoBloques;
+	}
+
+	public void setTamanoBloques(int tamanoBloques) {
+		this.tamanoBloques = tamanoBloques;
+	}
+
+	public int getBloqueInicial() {
+		return bloqueInicial;
+	}
+
+	public void setBloqueInicial(int bloqueInicial) {
+		this.bloqueInicial = bloqueInicial;
+	}
+
+	public NodeFS getPadre() {
+		return padre;
+	}
+
+	public void setPadre(NodeFS padre) {
+		this.padre = padre;
+	}
+
+	public NodeFS getPrimerHijo() {
+		return primerHijo;
+	}
+
+	public void setPrimerHijo(NodeFS primerHijo) {
+		this.primerHijo = primerHijo;
+	}
+
+	public NodeFS getSiguienteHermano() {
+		return siguienteHermano;
+	}
+
+	public void setSiguienteHermano(NodeFS siguienteHermano) {
+		this.siguienteHermano = siguienteHermano;
+	}
+
 }
