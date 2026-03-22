@@ -49,4 +49,17 @@ public class newCustomQueue {
 	public boolean estaVacia() {
 		return frente == null;
 	}
+
+	public int getSize() {
+		int contador = 0;
+		PCB actual = frente; // Empezamos desde el primero
+
+		// Mientras haya un proceso, contamos y pasamos al siguiente
+		while (actual != null) {
+			contador++;
+			actual = actual.getSiguienteProceso();
+		}
+
+		return contador;
+	}
 }
