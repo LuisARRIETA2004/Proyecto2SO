@@ -36,7 +36,7 @@ public class Disk {
         int bloqueAnterior = -1;
         int bloquesAsignados = 0;
 
-        // Recorremos el disco buscando bloques libres
+        // Recorremos el disco buscando los bloques libres
         for (int i = 0; i < capacidadTotal && bloquesAsignados < tamanoEnBloques; i++) {
             
             if (!bloques[i].isOcupado()) {
