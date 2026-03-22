@@ -9,8 +9,6 @@ package structures;
  * @author truenno
  */
 public class NodeFS {
-	// 1. Metadatos generales
-
 	private String nombre;
 	private boolean esDirectorio;
 	private String propietario; // Para saber si es del Administrador o Usuario
@@ -53,10 +51,8 @@ public class NodeFS {
 		}
 
 		if (this.primerHijo == null) {
-			// Si la carpeta está vacía, este es el primer hijo
 			this.primerHijo = nuevoHijo;
 		} else {
-			// Si ya tiene hijos, recorremos los "hermanos" hasta el último
 			NodeFS actual = this.primerHijo;
 			while (actual.siguienteHermano != null) {
 				actual = actual.siguienteHermano;
