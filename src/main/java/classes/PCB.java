@@ -9,16 +9,16 @@ import structures.NodeFS;
  *
  * @author truenno
  */
-public class Process {
+public class PCB {
     private static int contadorIds = 1; 
     private int id;
     private String estado; 
     private String operacion; 
     private NodeFS archivoObjetivo; 
     
-    private Process siguienteProceso; 
+    private PCB siguienteProceso; 
 
-    public Process(String operacion, NodeFS archivoObjetivo) {
+    public PCB(String operacion, NodeFS archivoObjetivo) {
         this.id = contadorIds++;
         this.estado = "NUEVO";
         this.operacion = operacion;
@@ -31,7 +31,7 @@ public class Process {
 	}
 
 	public static void setContadorIds(int contadorIds) {
-		Process.contadorIds = contadorIds;
+		PCB.contadorIds = contadorIds;
 	}
 
 	public int getId() {
@@ -66,11 +66,11 @@ public class Process {
 		this.archivoObjetivo = archivoObjetivo;
 	}
 
-	public Process getSiguienteProceso() {
+	public PCB getSiguienteProceso() {
 		return siguienteProceso;
 	}
 
-	public void setSiguienteProceso(Process siguienteProceso) {
+	public void setSiguienteProceso(PCB siguienteProceso) {
 		this.siguienteProceso = siguienteProceso;
 	}
 

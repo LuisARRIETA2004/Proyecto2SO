@@ -15,12 +15,12 @@ public class NodeFS {
 	private boolean esDirectorio;
 	private String propietario; // Para saber si es del Administrador o Usuario
 
-	private int tamanoBloques;  
-	private int bloqueInicial;  
+	private int tamanoBloques;
+	private int bloqueInicial;
 
-	private NodeFS padre;             
-	private NodeFS primerHijo;        
-	private NodeFS siguienteHermano;  
+	private NodeFS padre;
+	private NodeFS primerHijo;
+	private NodeFS siguienteHermano;
 
 	// Constructor para un DIRECTORIO
 	public NodeFS(String nombre, String propietario, NodeFS padre) {
