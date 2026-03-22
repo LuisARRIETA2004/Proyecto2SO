@@ -20,8 +20,8 @@ public class PCB {
 
     public PCB(String operacion, NodeFS archivoObjetivo) {
         this.id = contadorIds++;
-        this.estado = "NUEVO";
-        this.operacion = operacion;
+        this.estado = "NUEVO"; // "NUEVO", "LISTO", "EJECUTANDO", "BLOQUEADO", "TERMINADO"
+        this.operacion = operacion; // "LEER", "ESCRIBIR", "CREAR", "ELIMINAR"
         this.archivoObjetivo = archivoObjetivo;
         this.siguienteProceso = null;
     }
