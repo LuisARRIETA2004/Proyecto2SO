@@ -32,6 +32,11 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
 
+        grupoModo.add(rbAdmin);
+        grupoModo.add(rbUsuario);
+
+        rbUsuario.setSelected(true); // Predeterminado en Usuario
+        actualizarPermisos(); // Llamar inmediatamente para bloquear botones
         // Iniciar visuales
         inicializarDiscoGrafico();
 
@@ -529,7 +534,7 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_rbAdminActionPerformed
 
     private void rbUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbUsuarioActionPerformed
-        // TODO add your handling code here:
+        actualizarPermisos();
     }//GEN-LAST:event_rbUsuarioActionPerformed
 
     private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCrearArchivoActionPerformed
@@ -772,19 +777,25 @@ public class MainFrame extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) tableProcesos.getModel();
         model.setRowCount(0); // Limpiar tabla
 
-        // 1. Mostrar el proceso que está usando el disco actualmente
+        // 1. Mostrar el proceso que está usando el cabezal actualmente
         PCB actual = scheduler.getProcesoActual();
         if (actual != null) {
-            model.addRow(new Object[]{actual.getId(), actual.getOperacion(), "EJECUTANDO", actual.getBloqueDestino()});
+            model.addRow(new Object[]{actual.getId(), actual.getOperacion(), "EJECUTANDO (DISCO)", actual.getBloqueDestino()});
         }
 
-        // 2. Mostrar los procesos que están esperando en la Cola de Listos
-        // Como no podemos usar iteradores de Java, recorremos la cola manualmente
-        int size = colaListos.getSize();
-        for (int i = 0; i < size; i++) {
-            PCB p = colaListos.get(i); // Usando el método get(i) que creamos en la cola
+        // 2. Mostrar procesos en la cola de Listos (los que esperan por CPU/Lock)
+        for (int i = 0; i < colaListos.getSize(); i++) {
+            PCB p = colaListos.get(i);
             if (p != null) {
-                model.addRow(new Object[]{p.getId(), p.getOperacion(), "LISTO", p.getBloqueDestino()});
+                model.addRow(new Object[]{p.getId(), p.getOperacion(), "READY", p.getBloqueDestino()});
+            }
+        }
+
+        // 3. Mostrar procesos que están bloqueados esperando un archivo
+        for (int i = 0; i < colaBloqueados.getSize(); i++) {
+            PCB p = colaBloqueados.get(i);
+            if (p != null) {
+                model.addRow(new Object[]{p.getId(), p.getOperacion(), "WAITING LOCK", p.getBloqueDestino()});
             }
         }
     }
@@ -843,12 +854,24 @@ private void recorrerArbolParaTabla(NodeFS nodo, DefaultTableModel model) {
 
     private void actualizarPermisos() {
         boolean isAdmin = rbAdmin.isSelected();
+
+        // Botones que se desactivan para el Usuario
         btnCrearArchivo.setEnabled(isAdmin);
         btnCrearCarpeta.setEnabled(isAdmin);
         btnEliminar.setEnabled(isAdmin);
+        btnPruebaEstras.setEnabled(isAdmin);
         comboAlgoritmo.setEnabled(isAdmin);
+        jButton1.setEnabled(isAdmin); // Botón de fallo
+        btnCargarJSON.setEnabled(isAdmin); // El de cargar JSON/TXT
+
+        // El label de modo para dar feedback visual
+        if (isAdmin) {
+            txtJournal.append(">>> MODO: ADMINISTRADOR ACTIVADO\n");
+        } else {
+            txtJournal.append(">>> MODO: USUARIO (SOLO LECTURA)\n");
+        }
     }
-    
+
     private int buscarPrimerBloqueLibre() {
         Block[] bks = disco.getBloques();
         for (int i = 0; i < 100; i++) {
