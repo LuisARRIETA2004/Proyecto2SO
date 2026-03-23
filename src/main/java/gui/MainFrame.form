@@ -187,6 +187,9 @@
             </Property>
             <Property name="text" type="java.lang.String" value="SIMULAR FALLO"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+          </Events>
         </Component>
         <Container class="javax.swing.JPanel" name="jPanel3">
 
@@ -246,6 +249,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Leer"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnLeerActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnActualizar">
               <Properties>
@@ -264,11 +270,17 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Cargar CSV"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCargarCSVActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnGuardarCSV">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Guardar Historial"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnGuardarCSVActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnCrearArchivo">
               <Properties>
@@ -282,6 +294,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Crear Directorio"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCrearCarpetaActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnEliminar">
               <Properties>

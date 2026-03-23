@@ -161,8 +161,18 @@ public class MainFrame extends javax.swing.JFrame {
 
         jButton1.setBackground(new java.awt.Color(255, 118, 118));
         jButton1.setText("SIMULAR FALLO");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         btnLeer.setText("Leer");
+        btnLeer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLeerActionPerformed(evt);
+            }
+        });
 
         btnActualizar.setText("Actualizar");
 
@@ -174,8 +184,18 @@ public class MainFrame extends javax.swing.JFrame {
         });
 
         btnCargarCSV.setText("Cargar CSV");
+        btnCargarCSV.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCargarCSVActionPerformed(evt);
+            }
+        });
 
         btnGuardarCSV.setText("Guardar Historial");
+        btnGuardarCSV.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGuardarCSVActionPerformed(evt);
+            }
+        });
 
         btnCrearArchivo.setText("Crear Archivo");
         btnCrearArchivo.addActionListener(new java.awt.event.ActionListener() {
@@ -185,6 +205,11 @@ public class MainFrame extends javax.swing.JFrame {
         });
 
         btnCrearCarpeta.setText("Crear Directorio");
+        btnCrearCarpeta.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCrearCarpetaActionPerformed(evt);
+            }
+        });
 
         btnEliminar.setText("Eliminar");
 
@@ -525,6 +550,81 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnCrearArchivoActionPerformed
 
+    private void btnCrearCarpetaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCrearCarpetaActionPerformed
+        String nom = JOptionPane.showInputDialog(this, "Nombre del nuevo directorio:");
+        if (nom == null || nom.trim().isEmpty()) return;
+
+        // 1. Journaling
+        txtJournal.append("[PENDIENTE] CREAR DIRECTORIO: " + nom + "\n");
+
+        // 2. Creamos un proceso para simular el tiempo de E/S 
+        // (aunque no use bloques, el cabezal puede moverse a la posición actual)
+        PCB solicitud = new PCB("CREAR_DIR", arbolLogic.getRaiz(), scheduler.getPosicionCabezal(), nom, 0);
+        colaListos.encolar(solicitud);
+    }//GEN-LAST:event_btnCrearCarpetaActionPerformed
+
+    private void btnLeerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLeerActionPerformed
+        // Obtenemos el nombre del archivo seleccionado (puedes pedirlo por input para ir más rápido)
+        String nom = JOptionPane.showInputDialog(this, "Nombre del archivo a leer:");
+        if (nom == null) return;
+
+        // Buscamos el nodo en el árbol
+        NodeFS nodo = buscarNodoEnArbol(arbolLogic.getRaiz(), nom);
+
+        if (nodo != null && !nodo.isEsDirectorio()) {
+            txtJournal.append("[PENDIENTE] LEER ARCHIVO: " + nom + "\n");
+            // El destino es el bloque de inicio del archivo
+            PCB solicitud = new PCB("LEER", nodo, nodo.getBloqueInicial(), nom, 0);
+            colaListos.encolar(solicitud);
+        } else {
+            JOptionPane.showMessageDialog(this, "Archivo no encontrado o es una carpeta.");
+        }
+    }//GEN-LAST:event_btnLeerActionPerformed
+
+    private void btnCargarCSVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCargarCSVActionPerformed
+
+    }//GEN-LAST:event_btnCargarCSVActionPerformed
+
+    private void btnGuardarCSVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarCSVActionPerformed
+                    try {
+                    java.io.PrintWriter pw = new java.io.PrintWriter("historial_sistema.csv");
+                    pw.println("--- LOG DE OPERACIONES DEL SISTEMA DE ARCHIVOS ---");
+                    pw.println(txtJournal.getText());
+                    pw.close();
+                    JOptionPane.showMessageDialog(this, "Historial guardado en 'historial_sistema.csv'");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Error al guardar: " + e.getMessage());
+                }
+    }//GEN-LAST:event_btnGuardarCSVActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // 1. Detener el motor (Simular que el sistema se apaga)
+        scheduler.setSimulando(false);
+
+        JOptionPane.showMessageDialog(this, "!!! SISTEMA CAÍDO (CRASH) !!!\nIniciando proceso de recuperación mediante Journaling.");
+
+        // 2. Analizar la bitácora
+        String bitacora = txtJournal.getText();
+        txtJournal.append("\n>>> RECOVERY MODE ACTIVATED <<<\n");
+
+        // 3. Simular la limpieza de inconsistencias (Undo)
+        // Buscamos si hay algún [PENDIENTE] que no tenga su [CONFIRMADA]
+        // En un sistema real, aquí borraríamos los bloques a medio escribir.
+        txtJournal.append(">> Buscando transacciones huerfanas...\n");
+        txtJournal.append(">> Reventiendo operaciones no confirmadas (Rollback).\n");
+
+        // Limpiamos las colas de RAM (al fallar, la RAM se borra)
+        while(!colaListos.estaVacia()) colaListos.desencolar();
+        while(!colaBloqueados.estaVacia()) colaBloqueados.desencolar();
+        while(!colaES.estaVacia()) colaES.desencolar();
+
+        txtJournal.append(">> SISTEMA RECUPERADO. Consistencia restaurada.\n");
+
+        // 4. Reiniciar el motor
+        scheduler = new ThreadScheduler(colaListos, colaBloqueados, colaES, arbolLogic, txtJournal);
+        scheduler.start();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -676,16 +776,38 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    private void actualizarTablaFAT() {
-        DefaultTableModel model = (DefaultTableModel) tableFAT.getModel();
-        model.setRowCount(0);
-        Block[] bloques = disco.getBloques();
-        for (Block b : bloques) {
-            if (b.isOcupado() && b.getSiguienteBloque() == -1) { 
-                model.addRow(new Object[]{b.getPropietario(), "Enlazados", b.getIndice(), "None"});
-            }
+private void actualizarTablaFAT() {
+    DefaultTableModel model = (DefaultTableModel) tableFAT.getModel();
+    model.setRowCount(0); // Limpiar tabla
+
+    // Empezamos a buscar desde la raíz
+    recorrerArbolParaTabla(arbolLogic.getRaiz(), model);
+}
+
+// Método auxiliar para navegar el árbol hijo-hermano y llenar la tabla
+private void recorrerArbolParaTabla(NodeFS nodo, DefaultTableModel model) {
+    NodeFS hijo = nodo.getPrimerHijo();
+    while (hijo != null) {
+        if (!hijo.isEsDirectorio()) {
+            // Es un archivo: calculamos su tamaño real siguiendo la cadena en el disco
+            int primerBloque = hijo.getBloqueInicial();
+            String lockStatus = hijo.getLectoresActivos() > 0 ? "Compartido (R)" : "Ninguno";
+            // Si quieres ver si está bloqueado por escritura, podrías chequear el semáforo
+            
+            model.addRow(new Object[]{
+                hijo.getNombre(), 
+                hijo.getTamanoBloques(), 
+                primerBloque, 
+                lockStatus
+            });
         }
+        // Si el hijo tiene sus propios hijos (es carpeta), entramos en recursión
+        if (hijo.isEsDirectorio()) {
+            recorrerArbolParaTabla(hijo, model);
+        }
+        hijo = hijo.getSiguienteHermano();
     }
+}
 
     public void actualizarJTree() {
         NodeFS raizLogica = arbolLogic.getRaiz();
@@ -722,6 +844,10 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
         return 0; // Si el disco está lleno, lo manda al bloque 0
+    }
+
+    private NodeFS buscarNodoEnArbol(NodeFS raiz, String nom) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }
 

@@ -1,0 +1,33 @@
+--- LOG DE OPERACIONES DEL SISTEMA DE ARCHIVOS ---
+>>> CARGANDO CASO DE PRUEBA PDF
+[PENDIENTE] Solicitud de acceso al bloque 95
+[PENDIENTE] Solicitud de acceso al bloque 80
+[PENDIENTE] Solicitud de acceso al bloque 34
+[PENDIENTE] Solicitud de acceso al bloque 19
+[PENDIENTE] Solicitud de acceso al bloque 11
+[PENDIENTE] Solicitud de acceso al bloque 23
+[PENDIENTE] Solicitud de acceso al bloque 62
+[PENDIENTE] Solicitud de acceso al bloque 64
+[CONFIRMADA] LEER de Dato_Prueba_0 exitosa.
+>>> CARGANDO CASO DE PRUEBA PDF
+[PENDIENTE] Solicitud de acceso al bloque 95
+[PENDIENTE] Solicitud de acceso al bloque 80
+[PENDIENTE] Solicitud de acceso al bloque 34
+[PENDIENTE] Solicitud de acceso al bloque 19
+[PENDIENTE] Solicitud de acceso al bloque 11
+[PENDIENTE] Solicitud de acceso al bloque 23
+[PENDIENTE] Solicitud de acceso al bloque 62
+[PENDIENTE] Solicitud de acceso al bloque 64
+[CONFIRMADA] LEER de Dato_Prueba_1 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_2 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_3 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_4 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_5 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_6 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_7 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_0 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_1 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_2 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_3 exitosa.
+[CONFIRMADA] LEER de Dato_Prueba_4 exitosa.
+

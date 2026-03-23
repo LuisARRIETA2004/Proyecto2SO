@@ -37,7 +37,9 @@ public class ThreadScheduler extends Thread {
             revisarBloqueados();
             procesarListos();
             ejecutarOperacionDisco();
-            try { Thread.sleep(1500); } catch (InterruptedException e) {}
+            try { Thread.sleep(1500); } catch (InterruptedException e) {
+                System.out.println("Scheduler en pausa por fallo.");
+            }
         }
     }
 
@@ -69,11 +71,14 @@ public class ThreadScheduler extends Thread {
 
     private boolean intentarAdquirirLock(PCB p) {
         if (p.getArchivoObjetivo() == null) return true;
-        return p.getOperacion().equals("LEER") ? p.getArchivoObjetivo().adquirirLockLectura() : p.getArchivoObjetivo().adquirirLockEscritura();
+        return p.getOperacion().equals("LEER") ? 
+               p.getArchivoObjetivo().adquirirLockLectura() : 
+               p.getArchivoObjetivo().adquirirLockEscritura();
     }
 
     private void ejecutarOperacionDisco() {
         if (colaES.estaVacia()) { procesoActual = null; return; }
+        
         int[] refDir = {this.direccion};
         switch (politicaActiva) {
             case "SSTF": procesoActual = colaES.extraerSSTF(posicionCabezal); break;
@@ -85,15 +90,34 @@ public class ThreadScheduler extends Thread {
         if (procesoActual != null) {
             posicionCabezal = procesoActual.getBloqueDestino();
             procesoActual.setEstado("TERMINADO");
-            String op = procesoActual.getOperacion();
-            if (op.equals("CREAR")) arbol.crearArchivo(procesoActual.getNombreAux(), procesoActual.getTamanoAux(), "Admin", arbol.getRaiz());
-            else if (op.equals("ELIMINAR")) arbol.eliminarArchivo(arbol.getRaiz(), procesoActual.getNombreAux());
             
-            registrarEnGUI("CONFIRMADA", op + " exitosa en bloque " + posicionCabezal);
+            String op = procesoActual.getOperacion();
+            String nom = procesoActual.getNombreAux();
+
+            // EJECUCIÓN REAL DE LA OPERACIÓN
+            switch(op) {
+                case "CREAR":
+                    arbol.crearArchivo(nom, procesoActual.getTamanoAux(), "Admin", arbol.getRaiz());
+                    break;
+                case "CREAR_DIR":
+                    arbol.getRaiz().agregarHijo(new NodeFS(nom, "Admin", arbol.getRaiz()));
+                    break;
+                case "ELIMINAR":
+                    arbol.eliminarArchivo(arbol.getRaiz(), nom);
+                    break;
+                case "LEER":
+                    System.out.println("Lectura completada: " + nom);
+                    break;
+            }
+            
+            registrarEnGUI("CONFIRMADA", op + " de " + nom + " exitosa.");
+            
+            // Liberar Locks
             if (procesoActual.getArchivoObjetivo() != null) {
                 if (op.equals("LEER")) procesoActual.getArchivoObjetivo().liberarLockLectura();
                 else procesoActual.getArchivoObjetivo().liberarLockEscritura();
             }
+            procesoActual = null;
         }
     }
 
@@ -101,10 +125,10 @@ public class ThreadScheduler extends Thread {
         if (txtJournal != null) SwingUtilities.invokeLater(() -> txtJournal.append("[" + tag + "] " + mensaje + "\n"));
     }
 
+    // Getters y Setters
     public int getPosicionCabezal() { return posicionCabezal; }
     public PCB getProcesoActual() { return procesoActual; }
     public void setPoliticaActiva(String pol) { this.politicaActiva = pol; }
-    public void setPosicionCabezal(int pos) {
-    this.posicionCabezal = pos;
-    }
+    public void setPosicionCabezal(int pos) { this.posicionCabezal = pos; }
+    public void setSimulando(boolean s) { this.simulando = s; }
 }
