@@ -482,13 +482,21 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void comboAlgoritmoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboAlgoritmoActionPerformed
-            String seleccionado = comboAlgoritmo.getSelectedItem().toString();
+             String seleccionado = comboAlgoritmo.getSelectedItem().toString();
             scheduler.setPoliticaActiva(seleccionado);
             txtJournal.append(">>> SISTEMA: Cambiando algoritmo a " + seleccionado + "\n");
     }//GEN-LAST:event_comboAlgoritmoActionPerformed
 
     private void btnPruebaEstrasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPruebaEstrasActionPerformed
-        // TODO add your handling code here:
+        int[] peticiones = {95, 80, 34, 19, 11, 23, 62, 64};
+        txtJournal.append(">>> INICIANDO CASO DE PRUEBA PDF\n");
+        for (int i = 0; i < peticiones.length; i++) {
+            int bloqueDestino = peticiones[i];
+            PCB proceso = new PCB("LEER", null, bloqueDestino, "Archivo_Prueba_" + i, 1);
+            colaListos.encolar(proceso);
+            txtJournal.append("[PENDIENTE] Proceso " + proceso.getId() + " solicita bloque " + bloqueDestino + "\n");
+        }
+        JOptionPane.showMessageDialog(this, "8 Procesos cargados según el PDF.");
     }//GEN-LAST:event_btnPruebaEstrasActionPerformed
 
     private void rbAdminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAdminActionPerformed
@@ -496,51 +504,29 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_rbAdminActionPerformed
 
     private void rbUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbUsuarioActionPerformed
-        actualizarPermisos();
+        // TODO add your handling code here:
     }//GEN-LAST:event_rbUsuarioActionPerformed
 
     /**
      * @param args the command line arguments
      */
     
-    private void btnPruebaEstrasActionPerformed(java.awt.event.ActionEvent evt) {                                                
-        // Datos del Caso de Prueba del PDF (pág. 6)
-        // Nota: cambié 180, 119 y 123 por números menores a 100 para que coincidan con tu disco actual
-            int[] peticiones = {95, 80, 34, 19, 11, 23, 62, 64};
-            txtJournal.append(">>> CARGANDO CASO DE PRUEBA PDF\n");
-
-            for (int i = 0; i < peticiones.length; i++) {
-                int bloqueDestino = peticiones[i];
-                // Creamos procesos de LECTURA para probar los movimientos del cabezal
-                PCB proceso = new PCB("LEER", null, bloqueDestino, "Prueba_" + bloqueDestino, 1);
-                colaListos.encolar(proceso);
-                txtJournal.append("[PENDIENTE] Proceso " + proceso.getId() + " solicita bloque " + bloqueDestino + "\n");
-            }
-            JOptionPane.showMessageDialog(this, "8 Procesos cargados según el caso de prueba del PDF.");
-        }
-
-        JOptionPane.showMessageDialog(this, "8 Procesos cargados según el PDF.\nEl cabezal empezará a moverse usando el algoritmo: " + comboAlgoritmo.getSelectedItem());
-    }
     private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        String nombre = JOptionPane.showInputDialog(this, "Nombre del archivo:");
+        String nom = JOptionPane.showInputDialog(this, "Nombre del archivo:");
         String tamStr = JOptionPane.showInputDialog(this, "Tamaño (bloques):");
-
-        if (nombre != null && tamStr != null) {
-            try {
-                int tamano = Integer.parseInt(tamStr);
-                // Registro en Journal (Requisito 8)
-                txtJournal.append("[PENDIENTE] CREAR ARCHIVO: " + nombre + "\n");
-
-                // Buscamos un bloque destino aproximado (el primero libre)
-                int destino = buscarPrimerBloqueLibre();
-
-                // Creamos el PCB (ticket) y lo mandamos a la cola de listos
-                PCB solicitud = new PCB("CREAR", null, destino, nombre, tamano);
-                colaListos.encolar(solicitud);
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Error: El tamaño debe ser un número.");
-            }
-        }                                             
+        
+        if (nom != null && tamStr != null) {
+            int tam = Integer.parseInt(tamStr);
+            txtJournal.append("[PENDIENTE] CREAR " + nom + "\n");
+            
+            // Buscamos un bloque destino inicial (ej: el primer libre)
+            int destino = 0;
+            for(int i=0; i<100; i++) if(!disco.getBloques()[i].isOcupado()) { destino = i; break; }
+            
+            // Creamos el PCB (ticket) y lo mandamos a la cola
+            colaListos.encolar(new PCB("CREAR", null, destino, nom, tam));
+        }
+    }                                              
 
     public static void main(String args[]) {
         try {
@@ -710,7 +696,6 @@ public class MainFrame extends javax.swing.JFrame {
         btnEliminar.setEnabled(isAdmin);
         comboAlgoritmo.setEnabled(isAdmin);
     }
-    
-    
+      
 }
 
