@@ -12,8 +12,8 @@ public class PCB {
     private String operacion; 
     private NodeFS archivoObjetivo; 
     private int bloqueDestino;
-    private String nombreAux; // <-- AGREGAR ESTO
-    private int tamanoAux;   // <-- AGREGAR ESTO
+    private String nombreAux; 
+    private int tamanoAux;   
     private PCB siguienteProceso; 
 
     public PCB(String operacion, NodeFS archivoObjetivo, int bloqueDestino, String nombreAux, int tamanoAux) {
@@ -22,8 +22,8 @@ public class PCB {
         this.operacion = operacion;
         this.archivoObjetivo = archivoObjetivo;
         this.bloqueDestino = bloqueDestino;
-        this.nombreAux = nombreAux; // <-- AGREGAR ESTO
-        this.tamanoAux = tamanoAux; // <-- AGREGAR ESTO
+        this.nombreAux = nombreAux; 
+        this.tamanoAux = tamanoAux; 
         this.siguienteProceso = null;
     }
 
