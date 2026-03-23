@@ -15,16 +15,26 @@ public class PCB {
     private String estado; 
     private String operacion; 
     private NodeFS archivoObjetivo; 
+    private int bloqueDestino;
     
     private PCB siguienteProceso; 
 
-    public PCB(String operacion, NodeFS archivoObjetivo) {
+    public PCB(String operacion, NodeFS archivoObjetivo,int bloqueDestino) {
         this.id = contadorIds++;
         this.estado = "NUEVO"; // "NUEVO", "LISTO", "EJECUTANDO", "BLOQUEADO", "TERMINADO"
         this.operacion = operacion; // "LEER", "ESCRIBIR", "CREAR", "ELIMINAR"
         this.archivoObjetivo = archivoObjetivo;
         this.siguienteProceso = null;
+	this.bloqueDestino = bloqueDestino;
     }
+
+	public int getBloqueDestino() {
+		return bloqueDestino;
+	}
+
+	public void setBloqueDestino(int bloqueDestino) {
+		this.bloqueDestino = bloqueDestino;
+	}
 
 	public static int getContadorIds() {
 		return contadorIds;
