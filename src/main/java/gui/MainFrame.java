@@ -464,6 +464,26 @@ public class MainFrame extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
+    
+    private void btnPruebaEstrasActionPerformed(java.awt.event.ActionEvent evt) {                                                
+        // 1. Configurar cabezal en 50 (como dice el PDF)
+        scheduler.setPosicionCabezal(50);
+
+        // 2. Lista de solicitudes del PDF (pág. 6)
+        int[] peticionesPDF = {95, 180, 34, 119, 11, 123, 62, 64};
+
+        txtJournal.append(">>> CARGANDO CASO DE PRUEBA PDF (Cabezal en 50)\n");
+
+        for (int bloque : peticionesPDF) {
+            // Creamos procesos ficticios para estas posiciones
+            // Usamos una operación de "LECTURA" para probar los algoritmos de disco
+            PCB proceso = new PCB("LEER", null, bloque, "SystemFile_" + bloque, 1);
+            colaListos.encolar(proceso);
+        }
+
+        JOptionPane.showMessageDialog(this, "Caso de prueba del PDF cargado.\nSeleccione el algoritmo y presione INICIAR.");
+        actualizarPantalla();
+    }
     private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {                                               
         String nom = JOptionPane.showInputDialog(this, "Nombre del archivo:");
         String tamStr = JOptionPane.showInputDialog(this, "Tamaño (bloques):");

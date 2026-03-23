@@ -104,4 +104,7 @@ public class ThreadScheduler extends Thread {
     public int getPosicionCabezal() { return posicionCabezal; }
     public PCB getProcesoActual() { return procesoActual; }
     public void setPoliticaActiva(String pol) { this.politicaActiva = pol; }
+    public void setPosicionCabezal(int pos) {
+    this.posicionCabezal = pos;
+}
 }
