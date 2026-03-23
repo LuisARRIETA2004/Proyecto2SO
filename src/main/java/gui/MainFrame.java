@@ -73,7 +73,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnLeer = new javax.swing.JButton();
         btnActualizar = new javax.swing.JButton();
         btnPruebaEstras = new javax.swing.JButton();
-        btnCargarCSV = new javax.swing.JButton();
+        btnCargarJSON = new javax.swing.JButton();
         btnGuardarCSV = new javax.swing.JButton();
         btnCrearArchivo = new javax.swing.JButton();
         btnCrearCarpeta = new javax.swing.JButton();
@@ -183,10 +183,10 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        btnCargarCSV.setText("Cargar CSV");
-        btnCargarCSV.addActionListener(new java.awt.event.ActionListener() {
+        btnCargarJSON.setText("Cargar JSON");
+        btnCargarJSON.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCargarCSVActionPerformed(evt);
+                btnCargarJSONActionPerformed(evt);
             }
         });
 
@@ -227,7 +227,7 @@ public class MainFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnPruebaEstras)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnCargarCSV)
+                        .addComponent(btnCargarJSON)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnGuardarCSV))
                     .addGroup(jPanel3Layout.createSequentialGroup()
@@ -236,7 +236,7 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(btnCrearCarpeta)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnEliminar)))
-                .addContainerGap(10, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -246,7 +246,7 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(btnLeer)
                     .addComponent(btnActualizar)
                     .addComponent(btnPruebaEstras)
-                    .addComponent(btnCargarCSV)
+                    .addComponent(btnCargarJSON)
                     .addComponent(btnGuardarCSV))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -285,7 +285,7 @@ public class MainFrame extends javax.swing.JFrame {
         panelBloquesDisco.setLayout(panelBloquesDiscoLayout);
         panelBloquesDiscoLayout.setHorizontalGroup(
             panelBloquesDiscoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 571, Short.MAX_VALUE)
+            .addGap(0, 574, Short.MAX_VALUE)
         );
         panelBloquesDiscoLayout.setVerticalGroup(
             panelBloquesDiscoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -328,7 +328,7 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 583, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -354,7 +354,7 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel8.setLayout(jPanel8Layout);
         jPanel8Layout.setHorizontalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 583, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -373,7 +373,7 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 574, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -581,9 +581,22 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnLeerActionPerformed
 
-    private void btnCargarCSVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCargarCSVActionPerformed
+    private void btnCargarJSONActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCargarJSONActionPerformed
+        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+        if (selector.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
 
-    }//GEN-LAST:event_btnCargarCSVActionPerformed
+            // Reiniciar todo para la prueba limpia
+            disco = new Disk(200); 
+            arbolLogic = new TreeFS().new ArbolSistemaArchivos(disco);
+            while(!colaListos.estaVacia()) colaListos.desencolar();
+
+            // Llamar a nuestro cargador manual
+            SimuladorLoader.cargarEscenario(selector.getSelectedFile(), disco, arbolLogic, colaListos, scheduler);
+
+            actualizarPantalla();
+            actualizarJTree();
+        }
+    }//GEN-LAST:event_btnCargarJSONActionPerformed
 
     private void btnGuardarCSVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarCSVActionPerformed
                     try {
@@ -649,7 +662,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnActualizar;
-    private javax.swing.JButton btnCargarCSV;
+    private javax.swing.JButton btnCargarJSON;
     private javax.swing.JButton btnCrearArchivo;
     private javax.swing.JButton btnCrearCarpeta;
     private javax.swing.JButton btnEliminar;

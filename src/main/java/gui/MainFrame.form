@@ -206,7 +206,7 @@
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="btnPruebaEstras" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="btnCargarCSV" min="-2" max="-2" attributes="0"/>
+                              <Component id="btnCargarJSON" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="btnGuardarCSV" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -218,7 +218,7 @@
                               <Component id="btnEliminar" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="10" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -230,7 +230,7 @@
                           <Component id="btnLeer" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="btnActualizar" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="btnPruebaEstras" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="btnCargarCSV" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnCargarJSON" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="btnGuardarCSV" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -266,12 +266,12 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnPruebaEstrasActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="btnCargarCSV">
+            <Component class="javax.swing.JButton" name="btnCargarJSON">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Cargar CSV"/>
+                <Property name="text" type="java.lang.String" value="Cargar JSON"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCargarCSVActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCargarJSONActionPerformed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnGuardarCSV">
@@ -427,7 +427,7 @@
                       <Layout>
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <EmptySpace min="0" pref="571" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="574" max="32767" attributes="0"/>
                           </Group>
                         </DimensionLayout>
                         <DimensionLayout dim="1">
@@ -451,7 +451,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane2" alignment="0" pref="583" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" alignment="0" pref="586" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
@@ -523,7 +523,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane3" alignment="0" pref="583" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" alignment="0" pref="586" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
@@ -597,7 +597,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane4" pref="571" max="32767" attributes="0"/>
+                              <Component id="jScrollPane4" pref="574" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
