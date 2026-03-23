@@ -44,4 +44,7 @@ package classes;
 		public void setSiguienteBloque(int siguienteBloque) {
 			this.siguienteBloque = siguienteBloque;
 		}
+                public int getIndice() {
+                    return indice;
+                }
 	}	

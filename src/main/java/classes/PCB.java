@@ -5,10 +5,6 @@
 package classes;
 import structures.NodeFS;
 
-/**
- *
- * @author truenno
- */
 public class PCB {
     private static int contadorIds = 1; 
     private int id;
@@ -16,72 +12,31 @@ public class PCB {
     private String operacion; 
     private NodeFS archivoObjetivo; 
     private int bloqueDestino;
-    
+    private String nombreAux; // <-- AGREGAR ESTO
+    private int tamanoAux;   // <-- AGREGAR ESTO
     private PCB siguienteProceso; 
 
-    public PCB(String operacion, NodeFS archivoObjetivo,int bloqueDestino) {
+    public PCB(String operacion, NodeFS archivoObjetivo, int bloqueDestino, String nombreAux, int tamanoAux) {
         this.id = contadorIds++;
-        this.estado = "NUEVO"; // "NUEVO", "LISTO", "EJECUTANDO", "BLOQUEADO", "TERMINADO"
-        this.operacion = operacion; // "LEER", "ESCRIBIR", "CREAR", "ELIMINAR"
+        this.estado = "NUEVO";
+        this.operacion = operacion;
         this.archivoObjetivo = archivoObjetivo;
+        this.bloqueDestino = bloqueDestino;
+        this.nombreAux = nombreAux; // <-- AGREGAR ESTO
+        this.tamanoAux = tamanoAux; // <-- AGREGAR ESTO
         this.siguienteProceso = null;
-	this.bloqueDestino = bloqueDestino;
     }
 
-	public int getBloqueDestino() {
-		return bloqueDestino;
-	}
-
-	public void setBloqueDestino(int bloqueDestino) {
-		this.bloqueDestino = bloqueDestino;
-	}
-
-	public static int getContadorIds() {
-		return contadorIds;
-	}
-
-	public static void setContadorIds(int contadorIds) {
-		PCB.contadorIds = contadorIds;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public String getEstado() {
-		return estado;
-	}
-
-	public void setEstado(String estado) {
-		this.estado = estado;
-	}
-
-	public String getOperacion() {
-		return operacion;
-	}
-
-	public void setOperacion(String operacion) {
-		this.operacion = operacion;
-	}
-
-	public NodeFS getArchivoObjetivo() {
-		return archivoObjetivo;
-	}
-
-	public void setArchivoObjetivo(NodeFS archivoObjetivo) {
-		this.archivoObjetivo = archivoObjetivo;
-	}
-
-	public PCB getSiguienteProceso() {
-		return siguienteProceso;
-	}
-
-	public void setSiguienteProceso(PCB siguienteProceso) {
-		this.siguienteProceso = siguienteProceso;
-	}
-
+    // Getters para los nuevos campos
+    public String getNombreAux() { return nombreAux; }
+    public int getTamanoAux() { return tamanoAux; }
+    // ... mantén tus otros getters y setters ...
+    public int getId() { return id; }
+    public String getOperacion() { return operacion; }
+    public NodeFS getArchivoObjetivo() { return archivoObjetivo; }
+    public int getBloqueDestino() { return bloqueDestino; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public PCB getSiguienteProceso() { return siguienteProceso; }
+    public void setSiguienteProceso(PCB sig) { this.siguienteProceso = sig; }
 }

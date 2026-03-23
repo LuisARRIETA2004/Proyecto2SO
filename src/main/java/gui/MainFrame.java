@@ -5,34 +5,26 @@
 
 package gui;
 
-import classes.Disk;
-import classes.Block;
-import classes.PCB;
-import structures.TreeFS;
-import structures.TreeFS.ArbolSistemaArchivos;
-import structures.newCustomQueue;
-import structures.ThreadScheduler;
-import java.awt.Color;
-import java.awt.GridLayout;
-import javax.swing.JLabel;
-import javax.swing.BorderFactory;
-import javax.swing.SwingConstants;
-import javax.swing.ButtonGroup;
+import classes.*;
+import structures.*;
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import structures.NodeFS;
 
 public class MainFrame extends javax.swing.JFrame {
 
-    // --- Instancias del Núcleo (Backend) ---
+    // --- INSTANCIAS DEL NÚCLEO (Backend) ---
     private Disk disco = new Disk(100); 
-    private ArbolSistemaArchivos arbolLogic = new TreeFS().new ArbolSistemaArchivos(disco);
+    private TreeFS.ArbolSistemaArchivos arbolLogic = new TreeFS().new ArbolSistemaArchivos(disco);
     private newCustomQueue colaListos = new newCustomQueue();
     private newCustomQueue colaBloqueados = new newCustomQueue();
     private newCustomQueue colaES = new newCustomQueue();
     private ThreadScheduler scheduler;
 
-    // --- Visualización ---
+    // --- VISUALIZACIÓN (Frontend) ---
     private JLabel[] bloquesVisuales = new JLabel[100];
     private ButtonGroup grupoModo = new ButtonGroup();
 
@@ -40,102 +32,23 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         
-        // Configuración de Modos
+        // Configurar RadioButtons
         grupoModo.add(rbAdmin);
         grupoModo.add(rbUsuario);
         rbAdmin.setSelected(true);
-
-        // 1. Preparar visualización
+        
         inicializarDiscoGrafico();
         actualizarJTree();
 
-        // 2. Iniciar el Scheduler (El motor que corre en paralelo)
-        // Pasamos las colas y la referencia al árbol para que él haga el trabajo
+        // Iniciar el motor (Scheduler)
         scheduler = new ThreadScheduler(colaListos, colaBloqueados, colaES, arbolLogic, txtJournal);
         scheduler.start();
 
-        // 3. Temporizador de UI (Solo para refrescar lo que el Scheduler hace)
+        // Timer para refrescar la interfaz cada 500ms
         new javax.swing.Timer(500, e -> {
             actualizarPantalla();
-            actualizarPermisos(); 
+            actualizarPermisos();
         }).start();
-    }
-
-    // --- MÉTODOS DE APOYO VISUAL ---
-
-    private void inicializarDiscoGrafico() {
-        panelBloquesDisco.setLayout(new GridLayout(10, 10, 2, 2));
-        panelBloquesDisco.removeAll();
-        for (int i = 0; i < 100; i++) {
-            bloquesVisuales[i] = new JLabel(String.valueOf(i));
-            bloquesVisuales[i].setOpaque(true);
-            bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
-            bloquesVisuales[i].setHorizontalAlignment(SwingConstants.CENTER);
-            bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            panelBloquesDisco.add(bloquesVisuales[i]);
-        }
-        panelBloquesDisco.revalidate();
-        panelBloquesDisco.repaint();
-    }
-
-    private void actualizarPantalla() {
-        // Pintar bloques según el estado lógico del disco
-        Block[] bloques = disco.getBloques();
-        int usados = 0;
-        for (int i = 0; i < 100; i++) {
-            if (bloques[i].isOcupado()) {
-                bloquesVisuales[i].setBackground(Color.CYAN);
-                usados++;
-            } else {
-                bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
-            }
-            
-            // Resaltar cabezal
-            if (i == scheduler.getPosicionCabezal()) {
-                bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.RED, 3));
-            } else {
-                bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            }
-        }
-        
-        lblUsados.setText("Usados: " + usados);
-        lblLibres.setText("Libre: " + (100 - usados));
-        lblPosCabezal.setText("Cabeza en: " + scheduler.getPosicionCabezal());
-        
-        // Actualizar CPU visual
-        PCB enEjecucion = scheduler.getProcesoActual();
-        if (enEjecucion != null) {
-            jLabel6.setText("ID: " + enEjecucion.getId() + " - " + enEjecucion.getOperacion());
-        } else {
-            jLabel6.setText("ID: --- (IDLE)");
-        }
-    }
-
-    private void actualizarPermisos() {
-        boolean isAdmin = rbAdmin.isSelected();
-        btnCrearArchivo.setEnabled(isAdmin);
-        btnCrearCarpeta.setEnabled(isAdmin);
-        btnEliminar.setEnabled(isAdmin);
-        comboAlgoritmo.setEnabled(isAdmin);
-    }
-
-    public void actualizarJTree() {
-        NodeFS raizLogica = arbolLogic.getRaiz();
-        DefaultMutableTreeNode raizVisual = new DefaultMutableTreeNode(raizLogica.getNombre());
-        llenarNodosJTree(raizLogica, raizVisual);
-        treeFiles.setModel(new DefaultTreeModel(raizVisual));
-    }
-
-    private void llenarNodosJTree(NodeFS nodoLogico, DefaultMutableTreeNode nodoVisual) {
-        NodeFS hijoActual = nodoLogico.getPrimerHijo();
-        while (hijoActual != null) {
-            DefaultMutableTreeNode nuevoNodoVisual = new DefaultMutableTreeNode(hijoActual.getNombre());
-            nodoVisual.add(nuevoNodoVisual);
-            if (hijoActual.isEsDirectorio()) {
-                llenarNodosJTree(hijoActual, nuevoNodoVisual);
-            }
-            hijoActual = hijoActual.getSiguienteHermano();
-        }
     }
 
 
@@ -551,12 +464,24 @@ public class MainFrame extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
+    private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {                                               
+        String nom = JOptionPane.showInputDialog(this, "Nombre del archivo:");
+        String tamStr = JOptionPane.showInputDialog(this, "Tamaño (bloques):");
+        
+        if (nom != null && tamStr != null) {
+            int tam = Integer.parseInt(tamStr);
+            txtJournal.append("[PENDIENTE] CREAR " + nom + "\n");
+            
+            // Buscamos un bloque destino inicial (ej: el primer libre)
+            int destino = 0;
+            for(int i=0; i<100; i++) if(!disco.getBloques()[i].isOcupado()) { destino = i; break; }
+            
+            // Creamos el PCB (ticket) y lo mandamos a la cola
+            colaListos.encolar(new PCB("CREAR", null, destino, nom, tam));
+        }
+    }                                              
+
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -564,22 +489,12 @@ public class MainFrame extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new MainFrame().setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new MainFrame().setVisible(true);
         });
     }
 
@@ -624,23 +539,17 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTree treeFiles;
     private javax.swing.JTextArea txtJournal;
     // End of variables declaration//GEN-END:variables
-}
 
+    
+    // --- MÉTODOS DE APOYO VISUAL (MVC: La vista se actualiza consultando al motor) ---
 
-
-
-
-
-
-
-private void inicializarDiscoGrafico() {
+    private void inicializarDiscoGrafico() {
         panelBloquesDisco.setLayout(new GridLayout(10, 10, 2, 2));
         panelBloquesDisco.removeAll();
         for (int i = 0; i < 100; i++) {
-            bloquesVisuales[i] = new JLabel(String.valueOf(i));
+            bloquesVisuales[i] = new JLabel(String.valueOf(i), SwingConstants.CENTER);
             bloquesVisuales[i].setOpaque(true);
             bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
-            bloquesVisuales[i].setHorizontalAlignment(SwingConstants.CENTER);
             bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
             panelBloquesDisco.add(bloquesVisuales[i]);
         }
@@ -648,19 +557,18 @@ private void inicializarDiscoGrafico() {
         panelBloquesDisco.repaint();
     }
 
-    private void actualizarPantalla() {
+    public void actualizarPantalla() {
         // 1. Pintar ocupación de bloques
-        Block[] bloques = disco.getBloques();
+        Block[] bloquesLogicos = disco.getBloques();
         int usados = 0;
         for (int i = 0; i < 100; i++) {
-            if (bloques[i].isOcupado()) {
+            if (bloquesLogicos[i].isOcupado()) {
                 bloquesVisuales[i].setBackground(Color.CYAN);
                 usados++;
             } else {
                 bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
             }
-            
-            // Resaltar cabezal
+            // Mostrar posición del cabezal
             if (i == scheduler.getPosicionCabezal()) {
                 bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.RED, 3));
             } else {
@@ -671,78 +579,65 @@ private void inicializarDiscoGrafico() {
         // 2. Actualizar Labels
         lblUsados.setText("Usados: " + usados);
         lblLibres.setText("Libre: " + (100 - usados));
-        lblPosCabezal.setText("Cabeza en: " + scheduler.getPosicionCabezal());
+        lblPosCabezal.setText("Cabeza: " + scheduler.getPosicionCabezal());
         
-        // 3. Actualizar la CPU (Running Process)
-        PCB enEjecucion = scheduler.getProcesoActual(); // Necesitas este getter en el Scheduler
-        if (enEjecucion != null) {
-            lblCpuId.setText(String.valueOf(enEjecucion.getId()));
-            // Actualiza los demás labels de la CPU aquí
+        // 3. CPU Visual
+        PCB p = scheduler.getProcesoActual();
+        jLabel6.setText(p != null ? "ID: " + p.getId() + " [" + p.getOperacion() + "]" : "ID: --- (IDLE)");
+        
+        // 4. Actualizar Tablas y Árbol
+        actualizarTablaProcesos();
+        actualizarTablaFAT();
+        actualizarJTree();
+    }
+
+    private void actualizarTablaProcesos() {
+        DefaultTableModel model = (DefaultTableModel) tableProcesos.getModel();
+        model.setRowCount(0);
+        PCB pActual = scheduler.getProcesoActual();
+        if (pActual != null) {
+            model.addRow(new Object[]{pActual.getId(), pActual.getOperacion(), "EXEC", pActual.getBloqueDestino()});
         }
     }
-    
+
+    private void actualizarTablaFAT() {
+        DefaultTableModel model = (DefaultTableModel) tableFAT.getModel();
+        model.setRowCount(0);
+        Block[] bloques = disco.getBloques();
+        for (Block b : bloques) {
+            if (b.isOcupado() && b.getSiguienteBloque() == -1) { 
+                model.addRow(new Object[]{b.getPropietario(), "Enlazados", b.getIndice(), "None"});
+            }
+        }
+    }
+
+    public void actualizarJTree() {
+        NodeFS raizLogica = arbolLogic.getRaiz();
+        DefaultMutableTreeNode raizVisual = new DefaultMutableTreeNode(raizLogica.getNombre());
+        llenarNodosJTree(raizLogica, raizVisual);
+        treeFiles.setModel(new DefaultTreeModel(raizVisual));
+    }
+
+    private void llenarNodosJTree(NodeFS nodoLogico, DefaultMutableTreeNode nodoVisual) {
+        NodeFS hijoActual = nodoLogico.getPrimerHijo();
+        while (hijoActual != null) {
+            DefaultMutableTreeNode nuevoNodoVisual = new DefaultMutableTreeNode(hijoActual.getNombre());
+            nodoVisual.add(nuevoNodoVisual);
+            if (hijoActual.isEsDirectorio()) {
+                llenarNodosJTree(hijoActual, nuevoNodoVisual);
+            }
+            hijoActual = hijoActual.getSiguienteHermano();
+        }
+    }
+
     private void actualizarPermisos() {
         boolean isAdmin = rbAdmin.isSelected();
-        
-        // Botones prohibidos para el Usuario
         btnCrearArchivo.setEnabled(isAdmin);
         btnCrearCarpeta.setEnabled(isAdmin);
         btnEliminar.setEnabled(isAdmin);
-        btnPruebaEstras.setEnabled(isAdmin);
         comboAlgoritmo.setEnabled(isAdmin);
-        jButton1.setEnabled(isAdmin); // Botón SIMULAR FALLO
-        
-        // El usuario solo puede LEER y ACTUALIZAR (Refrescar vista)
-        btnLeer.setEnabled(true);
-        btnActualizar.setEnabled(true);
     }
+    
+    
+}
 
-    private void inicializarDiscoGrafico() {
-        panelBloquesDisco.setLayout(new GridLayout(10, 10, 2, 2));
-        panelBloquesDisco.removeAll();
-        for (int i = 0; i < 100; i++) {
-            bloquesVisuales[i] = new JLabel(String.valueOf(i));
-            bloquesVisuales[i].setOpaque(true);
-            bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
-            bloquesVisuales[i].setHorizontalAlignment(SwingConstants.CENTER);
-            bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            panelBloquesDisco.add(bloquesVisuales[i]);
-        }
-        panelBloquesDisco.revalidate();
-        panelBloquesDisco.repaint();
-    }
-
-    private void actualizarPantalla() {
-        // 1. Pintar bloques
-        Block[] bloques = disco.getBloques();
-        int usados = 0;
-        for (int i = 0; i < 100; i++) {
-            if (bloques[i].isOcupado()) {
-                bloquesVisuales[i].setBackground(Color.CYAN);
-                usados++;
-            } else {
-                bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
-            }
-            
-            // Resaltar cabezal
-            if (i == scheduler.getPosicionCabezal()) {
-                bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.RED, 3));
-            } else {
-                bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            }
-        }
-        
-        // 2. Actualizar Labels estadísticos
-        lblUsados.setText("Usados: " + usados);
-        lblLibres.setText("Libre: " + (100 - usados));
-        lblPosCabezal.setText("Cabeza en: " + scheduler.getPosicionCabezal());
-        
-        // 3. Actualizar Running Process
-        PCB enEjecucion = scheduler.getProcesoActual();
-        if (enEjecucion != null) {
-            // Asegúrate de haberle puesto estos nombres de variable a los Labels en Design
-            jLabel6.setText("ID: " + enEjecucion.getId() + " - " + enEjecucion.getOperacion());
-        } else {
-            jLabel6.setText("ID: --- (IDLE)");
-        }
-    }
