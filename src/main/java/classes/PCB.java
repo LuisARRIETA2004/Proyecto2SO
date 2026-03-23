@@ -16,14 +16,15 @@ public class PCB {
     private int tamanoAux;   
     private PCB siguienteProceso; 
 
+// Constructor de 5 parámetros (Necesario para el CRUD)
     public PCB(String operacion, NodeFS archivoObjetivo, int bloqueDestino, String nombreAux, int tamanoAux) {
         this.id = contadorIds++;
         this.estado = "NUEVO";
         this.operacion = operacion;
         this.archivoObjetivo = archivoObjetivo;
         this.bloqueDestino = bloqueDestino;
-        this.nombreAux = nombreAux; 
-        this.tamanoAux = tamanoAux; 
+        this.nombreAux = nombreAux; // Asegúrate de tener este atributo arriba
+        this.tamanoAux = tamanoAux; // Asegúrate de tener este atributo arriba
         this.siguienteProceso = null;
     }
 

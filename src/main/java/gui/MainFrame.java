@@ -31,20 +31,15 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         initComponents();
         this.setLocationRelativeTo(null);
-        
-        // Configurar RadioButtons
-        grupoModo.add(rbAdmin);
-        grupoModo.add(rbUsuario);
-        rbAdmin.setSelected(true);
-        
-        inicializarDiscoGrafico();
-        actualizarJTree();
 
-        // Iniciar el motor (Scheduler)
+        // Iniciar visuales
+        inicializarDiscoGrafico();
+
+        // INICIAR EL HILO DEL SCHEDULER
         scheduler = new ThreadScheduler(colaListos, colaBloqueados, colaES, arbolLogic, txtJournal);
         scheduler.start();
 
-        // Timer para refrescar la interfaz cada 500ms
+        // Iniciar el Timer de refresco (Cada 0.5 segundos)
         new javax.swing.Timer(500, e -> {
             actualizarPantalla();
             actualizarPermisos();
@@ -183,6 +178,11 @@ public class MainFrame extends javax.swing.JFrame {
         btnGuardarCSV.setText("Guardar Historial");
 
         btnCrearArchivo.setText("Crear Archivo");
+        btnCrearArchivo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCrearArchivoActionPerformed(evt);
+            }
+        });
 
         btnCrearCarpeta.setText("Crear Directorio");
 
@@ -488,15 +488,15 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_comboAlgoritmoActionPerformed
 
     private void btnPruebaEstrasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPruebaEstrasActionPerformed
-        int[] peticiones = {95, 80, 34, 19, 11, 23, 62, 64};
-        txtJournal.append(">>> INICIANDO CASO DE PRUEBA PDF\n");
-        for (int i = 0; i < peticiones.length; i++) {
-            int bloqueDestino = peticiones[i];
-            PCB proceso = new PCB("LEER", null, bloqueDestino, "Archivo_Prueba_" + i, 1);
-            colaListos.encolar(proceso);
-            txtJournal.append("[PENDIENTE] Proceso " + proceso.getId() + " solicita bloque " + bloqueDestino + "\n");
-        }
-        JOptionPane.showMessageDialog(this, "8 Procesos cargados según el PDF.");
+       int[] peticiones = {95, 80, 34, 19, 11, 23, 62, 64};
+    txtJournal.append(">>> CARGANDO CASO DE PRUEBA PDF\n");
+    
+    for (int i = 0; i < peticiones.length; i++) {
+        // Creamos un proceso de "LECTURA" para que el cabezal se mueva a esos bloques
+        PCB proceso = new PCB("LEER", null, peticiones[i], "Dato_Prueba_" + i, 1);
+        colaListos.encolar(proceso);
+        txtJournal.append("[PENDIENTE] Solicitud de acceso al bloque " + peticiones[i] + "\n");
+    }
     }//GEN-LAST:event_btnPruebaEstrasActionPerformed
 
     private void rbAdminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAdminActionPerformed
@@ -507,26 +507,28 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_rbUsuarioActionPerformed
 
+    private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCrearArchivoActionPerformed
+        String nombre = JOptionPane.showInputDialog(this, "Nombre del archivo:");
+        String tamStr = JOptionPane.showInputDialog(this, "Tamaño (bloques):");
+
+        if (nombre != null && tamStr != null) {
+            int tamano = Integer.parseInt(tamStr);
+            txtJournal.append("[PENDIENTE] Solicitud CREAR: " + nombre + "\n");
+
+            // Buscamos un bloque destino inicial (el primero que no esté ocupado)
+            int destino = 0;
+            for(int i=0; i<100; i++) if(!disco.getBloques()[i].isOcupado()) { destino = i; break; }
+
+            // IMPORTANTE: El MainFrame SOLO ENCOLA. El Scheduler creará el archivo después.
+            PCB solicitud = new PCB("CREAR", null, destino, nombre, tamano);
+            colaListos.encolar(solicitud);
+        }
+    }//GEN-LAST:event_btnCrearArchivoActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    
-    private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        String nom = JOptionPane.showInputDialog(this, "Nombre del archivo:");
-        String tamStr = JOptionPane.showInputDialog(this, "Tamaño (bloques):");
-        
-        if (nom != null && tamStr != null) {
-            int tam = Integer.parseInt(tamStr);
-            txtJournal.append("[PENDIENTE] CREAR " + nom + "\n");
-            
-            // Buscamos un bloque destino inicial (ej: el primer libre)
-            int destino = 0;
-            for(int i=0; i<100; i++) if(!disco.getBloques()[i].isOcupado()) { destino = i; break; }
-            
-            // Creamos el PCB (ticket) y lo mandamos a la cola
-            colaListos.encolar(new PCB("CREAR", null, destino, nom, tam));
-        }
-    }                                              
+                                              
 
     public static void main(String args[]) {
         try {
@@ -605,37 +607,52 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public void actualizarPantalla() {
-        // 1. Pintar ocupación de bloques
-        Block[] bloquesLogicos = disco.getBloques();
+        // 1. Dibujar bloques del disco (Colores)
+        Block[] bloques = disco.getBloques();
         int usados = 0;
         for (int i = 0; i < 100; i++) {
-            if (bloquesLogicos[i].isOcupado()) {
-                bloquesVisuales[i].setBackground(Color.CYAN);
-                usados++;
+            if (bloques[i].isOcupado()) {
+                bloquesVisuales[i].setBackground(new Color(51, 153, 255)); // Azul
             } else {
                 bloquesVisuales[i].setBackground(Color.LIGHT_GRAY);
             }
-            // Mostrar posición del cabezal
+            // Resaltar cabezal con borde rojo
             if (i == scheduler.getPosicionCabezal()) {
                 bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.RED, 3));
             } else {
                 bloquesVisuales[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
             }
+            if (bloques[i].isOcupado()) usados++;
         }
-        
-        // 2. Actualizar Labels
+
+        // 2. Actualizar Labels e Info CPU
         lblUsados.setText("Usados: " + usados);
         lblLibres.setText("Libre: " + (100 - usados));
-        lblPosCabezal.setText("Cabeza: " + scheduler.getPosicionCabezal());
-        
-        // 3. CPU Visual
+        lblPosCabezal.setText("Cabeza en: " + scheduler.getPosicionCabezal());
+
         PCB p = scheduler.getProcesoActual();
-        jLabel6.setText(p != null ? "ID: " + p.getId() + " [" + p.getOperacion() + "]" : "ID: --- (IDLE)");
-        
-        // 4. Actualizar Tablas y Árbol
-        actualizarTablaProcesos();
-        actualizarTablaFAT();
-        actualizarJTree();
+        jLabel6.setText(p != null ? "EJECUTANDO ID: " + p.getId() : "ID: --- (ESPERANDO)");
+
+        // 3. ACTUALIZAR TABLA DE PROCESOS
+        DefaultTableModel modelP = (DefaultTableModel) tableProcesos.getModel();
+        modelP.setRowCount(0);
+        if(p != null) modelP.addRow(new Object[]{p.getId(), p.getOperacion(), "EXEC", p.getBloqueDestino()});
+        for (int i = 0; i < colaListos.getSize(); i++) {
+            PCB waiting = colaListos.get(i);
+            if (waiting != null) modelP.addRow(new Object[]{waiting.getId(), waiting.getOperacion(), "READY", waiting.getBloqueDestino()});
+        }
+
+        // 4. ACTUALIZAR TABLA FAT
+        DefaultTableModel modelF = (DefaultTableModel) tableFAT.getModel();
+        modelF.setRowCount(0);
+        for (Block b : bloques) {
+            if (b.isOcupado() && b.getSiguienteBloque() == -1) { 
+                modelF.addRow(new Object[]{b.getPropietario(), "Enlazados", b.getIndice(), "None"});
+            }
+        }
+
+        // 5. ACTUALIZAR ARBOL (Explorador)
+        actualizarJTree(); 
     }
 
     private void actualizarTablaProcesos() {
@@ -696,6 +713,15 @@ public class MainFrame extends javax.swing.JFrame {
         btnEliminar.setEnabled(isAdmin);
         comboAlgoritmo.setEnabled(isAdmin);
     }
-      
+    
+    private int buscarPrimerBloqueLibre() {
+        Block[] bks = disco.getBloques();
+        for (int i = 0; i < 100; i++) {
+            if (!bks[i].isOcupado()) {
+                return i; // Retorna el primer índice vacío que encuentre
+            }
+        }
+        return 0; // Si el disco está lleno, lo manda al bloque 0
+    }
 }
 
