@@ -148,6 +148,11 @@ public class MainFrame extends javax.swing.JFrame {
         );
 
         comboAlgoritmo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FIFO", "SSTF", "SCAN", "C-SCAN" }));
+        comboAlgoritmo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                comboAlgoritmoActionPerformed(evt);
+            }
+        });
 
         jButton1.setBackground(new java.awt.Color(255, 118, 118));
         jButton1.setText("SIMULAR FALLO");
@@ -461,28 +466,34 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void comboAlgoritmoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboAlgoritmoActionPerformed
+             String seleccionado = comboAlgoritmo.getSelectedItem().toString();
+            scheduler.setPoliticaActiva(seleccionado);
+            txtJournal.append(">>> SISTEMA: Cambiando algoritmo a " + seleccionado + "\n");
+    }//GEN-LAST:event_comboAlgoritmoActionPerformed
+
     /**
      * @param args the command line arguments
      */
     
     private void btnPruebaEstrasActionPerformed(java.awt.event.ActionEvent evt) {                                                
-        // 1. Configurar cabezal en 50 (como dice el PDF)
-        scheduler.setPosicionCabezal(50);
+        // Datos del Caso de Prueba del PDF (pág. 6)
+        // Nota: cambié 180, 119 y 123 por números menores a 100 para que coincidan con tu disco actual
+        int[] peticiones = {95, 80, 34, 19, 11, 23, 62, 64};
 
-        // 2. Lista de solicitudes del PDF (pág. 6)
-        int[] peticionesPDF = {95, 180, 34, 119, 11, 123, 62, 64};
+        txtJournal.append(">>> INICIANDO CASO DE PRUEBA PDF\n");
 
-        txtJournal.append(">>> CARGANDO CASO DE PRUEBA PDF (Cabezal en 50)\n");
+        for (int i = 0; i < peticiones.length; i++) {
+            int bloqueDestino = peticiones[i];
+            // Creamos un proceso de "LECTURA" para probar el movimiento del cabezal
+            PCB proceso = new PCB("LEER", null, bloqueDestino, "Archivo_Prueba_" + i, 1);
 
-        for (int bloque : peticionesPDF) {
-            // Creamos procesos ficticios para estas posiciones
-            // Usamos una operación de "LECTURA" para probar los algoritmos de disco
-            PCB proceso = new PCB("LEER", null, bloque, "SystemFile_" + bloque, 1);
+            // Lo mandamos a la cola de listos
             colaListos.encolar(proceso);
+            txtJournal.append("[PENDIENTE] Proceso " + proceso.getId() + " solicita bloque " + bloqueDestino + "\n");
         }
 
-        JOptionPane.showMessageDialog(this, "Caso de prueba del PDF cargado.\nSeleccione el algoritmo y presione INICIAR.");
-        actualizarPantalla();
+        JOptionPane.showMessageDialog(this, "8 Procesos cargados según el PDF.\nEl cabezal empezará a moverse usando el algoritmo: " + comboAlgoritmo.getSelectedItem());
     }
     private void btnCrearArchivoActionPerformed(java.awt.event.ActionEvent evt) {                                               
         String nom = JOptionPane.showInputDialog(this, "Nombre del archivo:");
@@ -613,10 +624,22 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void actualizarTablaProcesos() {
         DefaultTableModel model = (DefaultTableModel) tableProcesos.getModel();
-        model.setRowCount(0);
-        PCB pActual = scheduler.getProcesoActual();
-        if (pActual != null) {
-            model.addRow(new Object[]{pActual.getId(), pActual.getOperacion(), "EXEC", pActual.getBloqueDestino()});
+        model.setRowCount(0); // Limpiar tabla
+
+        // 1. Mostrar el proceso que está usando el disco actualmente
+        PCB actual = scheduler.getProcesoActual();
+        if (actual != null) {
+            model.addRow(new Object[]{actual.getId(), actual.getOperacion(), "EJECUTANDO", actual.getBloqueDestino()});
+        }
+
+        // 2. Mostrar los procesos que están esperando en la Cola de Listos
+        // Como no podemos usar iteradores de Java, recorremos la cola manualmente
+        int size = colaListos.getSize();
+        for (int i = 0; i < size; i++) {
+            PCB p = colaListos.get(i); // Usando el método get(i) que creamos en la cola
+            if (p != null) {
+                model.addRow(new Object[]{p.getId(), p.getOperacion(), "LISTO", p.getBloqueDestino()});
+            }
         }
     }
 
