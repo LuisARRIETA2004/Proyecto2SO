@@ -99,18 +99,18 @@ public class ThreadScheduler extends Thread {
 		if (!colaES.estaVacia()) {
 
 			PCB p = null;
-			int[] refDireccion = {this.direccion}; 
+			int[] refDireccion = {this.direccion};
 
 			switch (politicaActiva) {
 				case "FIFO":
-					p = colaES.desencolar(); 
+					p = colaES.desencolar();
 					break;
 				case "SSTF":
 					p = colaES.extraerSSTF(posicionCabezal);
 					break;
 				case "SCAN":
 					p = colaES.extraerSCAN(posicionCabezal, refDireccion);
-					this.direccion = refDireccion[0]; 
+					this.direccion = refDireccion[0];
 					break;
 				case "C-SCAN":
 					p = colaES.extraerCSCAN(posicionCabezal);
@@ -133,6 +133,11 @@ public class ThreadScheduler extends Thread {
 				}
 			}
 		}
+	}
+
+	public void setPoliticaActiva(String politica) {
+		this.politicaActiva = politica;
+		System.out.println("Política de disco cambiada a: " + politica);
 	}
 
 	public void detener() {
