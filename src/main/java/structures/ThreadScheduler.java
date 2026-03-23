@@ -106,5 +106,5 @@ public class ThreadScheduler extends Thread {
     public void setPoliticaActiva(String pol) { this.politicaActiva = pol; }
     public void setPosicionCabezal(int pos) {
     this.posicionCabezal = pos;
-}
+    }
 }
