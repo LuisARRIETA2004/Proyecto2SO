@@ -7,86 +7,101 @@ package structures;
 import classes.PCB;
 
 /**
- *
- * @author truenno
+ * Cola personalizada para la gestión de procesos y planificación de disco.
  */
 public class newCustomQueue {
 
-	private PCB frente;
-	private PCB fin;
+    private PCB frente;
+    private PCB fin;
 
-	public newCustomQueue() {
-		this.frente = null;
-		this.fin = null;
-	}
+    public newCustomQueue() {
+        this.frente = null;
+        this.fin = null;
+    }
 
-	public void encolar(PCB nuevoProceso) {
-		if (estaVacia()) {
-			frente = nuevoProceso;
-			fin = nuevoProceso;
-		} else {
-			fin.setSiguienteProceso(nuevoProceso);
-			fin = nuevoProceso;
-		}
-	}
+    public void encolar(PCB nuevoProceso) {
+        if (estaVacia()) {
+            frente = nuevoProceso;
+            fin = nuevoProceso;
+        } else {
+            fin.setSiguienteProceso(nuevoProceso);
+            fin = nuevoProceso;
+        }
+    }
 
-	public PCB desencolar() {
-		if (estaVacia()) {
-			return null;
-		}
+    public PCB desencolar() {
+        if (estaVacia()) {
+            return null;
+        }
 
-		PCB procesoSaliente = frente;
-		frente = frente.getSiguienteProceso();
+        PCB procesoSaliente = frente;
+        frente = frente.getSiguienteProceso();
 
-		if (frente == null) {
-			fin = null;
-		}
+        if (frente == null) {
+            fin = null;
+        }
 
-		procesoSaliente.setSiguienteProceso(null);
-		return procesoSaliente;
-	}
+        procesoSaliente.setSiguienteProceso(null);
+        return procesoSaliente;
+    }
 
-	public boolean estaVacia() {
-		return frente == null;
-	}
+    /**
+     * Retorna el primer elemento sin sacarlo de la cola.
+     * Requerido por el ThreadScheduler.
+     */
+    public PCB peek() {
+        return frente;
+    }
 
-	public int getSize() {
-		int contador = 0;
-		PCB actual = frente; // Empezamos desde el primero
+    public boolean estaVacia() {
+        return frente == null;
+    }
 
-		// Mientras haya un proceso, contamos y pasamos al siguiente
-		while (actual != null) {
-			contador++;
-			actual = actual.getSiguienteProceso();
-		}
+    public int getSize() {
+        int contador = 0;
+        PCB actual = frente;
+        while (actual != null) {
+            contador++;
+            actual = actual.getSiguienteProceso();
+        }
+        return contador;
+    }
 
-		return contador;
-	}
+    /**
+     * Retorna un proceso según su posición (índice).
+     * Requerido por el MainFrame para llenar las tablas.
+     */
+    public PCB get(int index) {
+        if (estaVacia() || index < 0 || index >= getSize()) {
+            return null;
+        }
 
-	// POLITICAS DE DISCO
-	
-	public PCB removerNodoEspecifico(PCB aRemover, PCB anterior) {
+        PCB actual = frente;
+        for (int i = 0; i < index; i++) {
+            actual = actual.getSiguienteProceso();
+        }
+        return actual;
+    }
+
+    // --- POLÍTICAS DE PLANIFICACIÓN DE DISCO ---
+
+    public PCB removerNodoEspecifico(PCB aRemover, PCB anterior) {
         if (aRemover == frente) {
-            return desencolar(); // Si es el primero, usamos el método normal
+            return desencolar();
         }
-        // Saltamos el nodo a remover (lo desconectamos)
         anterior.setSiguienteProceso(aRemover.getSiguienteProceso());
-        
         if (aRemover == fin) {
-            fin = anterior; // Si era el último, actualizamos la cola
+            fin = anterior;
         }
-        
         aRemover.setSiguienteProceso(null);
         return aRemover;
     }
 
-	// ALGORITMO SSTF
     public PCB extraerSSTF(int cabezal) {
         if (estaVacia()) return null;
 
         PCB actual = frente;
         PCB anterior = null;
-        
         PCB mejor = frente;
         PCB anteriorAlMejor = null;
         int menorDistancia = Math.abs(frente.getBloqueDestino() - cabezal);
@@ -101,17 +116,14 @@ public class newCustomQueue {
             anterior = actual;
             actual = actual.getSiguienteProceso();
         }
-
         return removerNodoEspecifico(mejor, anteriorAlMejor);
     }
 
-    // ALGORITMO SCAN: El ascensor (Sube y luego baja)
     public PCB extraerSCAN(int cabezal, int[] direccionActual) {
         if (estaVacia()) return null;
 
         PCB actual = frente;
         PCB anterior = null;
-        
         PCB mejor = null;
         PCB anteriorAlMejor = null;
         int menorDistancia = Integer.MAX_VALUE;
@@ -137,22 +149,19 @@ public class newCustomQueue {
             return removerNodoEspecifico(mejor, anteriorAlMejor);
         } else {
             direccionActual[0] *= -1; 
-            return extraerSCAN(cabezal, direccionActual); // Llamada recursiva
+            return extraerSCAN(cabezal, direccionActual);
         }
     }
 
-    // ALGORITMO C-SCAN: Ascensor circular (Solo sube, cuando llega arriba vuelve a empezar desde abajo)
     public PCB extraerCSCAN(int cabezal) {
         if (estaVacia()) return null;
 
         PCB actual = frente;
         PCB anterior = null;
-        
         PCB mejor = null;
         PCB anteriorAlMejor = null;
         int menorDistancia = Integer.MAX_VALUE;
 
-        // Pasada 1: Buscar el más cercano HACIA ARRIBA (destino >= cabezal)
         while (actual != null) {
             int destino = actual.getBloqueDestino();
             if (destino >= cabezal) {
@@ -170,11 +179,9 @@ public class newCustomQueue {
         if (mejor != null) {
             return removerNodoEspecifico(mejor, anteriorAlMejor);
         } else {
-            // Pasada 2: No hay más hacia arriba. Saltamos al bloque MÁS PEQUEÑO de toda la cola
             actual = frente;
             anterior = null;
             int bloqueMasBajo = Integer.MAX_VALUE;
-            
             while (actual != null) {
                 if (actual.getBloqueDestino() < bloqueMasBajo) {
                     bloqueMasBajo = actual.getBloqueDestino();

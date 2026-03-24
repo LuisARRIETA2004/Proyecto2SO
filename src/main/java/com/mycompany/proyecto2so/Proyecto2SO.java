@@ -4,13 +4,13 @@
 
 package com.mycompany.proyecto2so;
 
-/**
- *
- * @author User
- */
-public class Proyecto2SO {
+import gui.MainFrame;
 
+public class Proyecto2SO {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        // Esto hace que al darle al botón verde de Play se abra tu interfaz
+        java.awt.EventQueue.invokeLater(() -> {
+            new MainFrame().setVisible(true);
+        });
     }
 }

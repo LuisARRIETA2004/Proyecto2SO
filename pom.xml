@@ -10,4 +10,12 @@
         <maven.compiler.release>21</maven.compiler.release>
         <exec.mainClass>com.mycompany.proyecto2so.Proyecto2SO</exec.mainClass>
     </properties>
+    <dependencies>
+        <!-- AQUI PEGASTE LA LIBRERIA -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
+    </dependencies>
 </project>

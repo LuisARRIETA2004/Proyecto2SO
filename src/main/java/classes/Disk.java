@@ -72,6 +72,19 @@ public class Disk {
             bloqueActual = siguiente;
         }
     }
+    
+    public void asignarArchivoEnPosicion(String nombre, int inicio, int tamano) {
+        for (int i = inicio; i < inicio + tamano && i < bloques.length; i++) {
+            bloques[i].setOcupado(true);
+            bloques[i].setPropietario(nombre);
+            // Encadenamiento
+            if (i < inicio + tamano - 1) {
+                bloques[i].setSiguienteBloque(i + 1);
+            } else {
+                bloques[i].setSiguienteBloque(-1); // Fin del archivo
+            }
+        }
+    }
 
     public Block[] getBloques() {
         return bloques;

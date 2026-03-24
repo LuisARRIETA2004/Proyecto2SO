@@ -4,143 +4,208 @@
  */
 package structures;
 
-import javax.swing.SwingUtilities;
 import classes.PCB;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
-/**
- *
- * @author truenno
- */
 public class ThreadScheduler extends Thread {
 
 	private newCustomQueue colaListos;
 	private newCustomQueue colaBloqueados;
 	private newCustomQueue colaES;
-	private int posicionCabezal = 50;
+	private int posicionCabezal = 0;
 	private int direccion = 1;
-	private String politicaActiva = "SSTF"; // Puede ser "FIFO", "SSTF", "SCAN", "C-SCAN"
-
+	private String politicaActiva = "FIFO";
+	private TreeFS.ArbolSistemaArchivos arbol;
+	private JTextArea txtJournal;
+	private PCB procesoActual;
+	private boolean forzarFalloProximo = false;
 	private boolean simulando;
 
-	public ThreadScheduler(newCustomQueue listos, newCustomQueue bloqueados, newCustomQueue es) {
+	public ThreadScheduler(newCustomQueue listos, newCustomQueue bloqueados, newCustomQueue es,
+		TreeFS.ArbolSistemaArchivos arbol, JTextArea journal) {
 		this.colaListos = listos;
 		this.colaBloqueados = bloqueados;
 		this.colaES = es;
+		this.arbol = arbol;
+		this.txtJournal = journal;
 		this.simulando = true;
 	}
 
 	@Override
 	public void run() {
-		System.out.println("Planificador iniciado...");
-
 		while (simulando) {
 			revisarBloqueados();
-
 			procesarListos();
-
 			ejecutarOperacionDisco();
-
 			try {
 				Thread.sleep(1500);
 			} catch (InterruptedException e) {
-				System.out.println("Planificador interrumpido.");
+				System.out.println("Scheduler en pausa por fallo.");
 			}
 		}
-		System.out.println("Planificador detenido.");
 	}
 
 	private void revisarBloqueados() {
 		if (colaBloqueados.estaVacia()) {
 			return;
 		}
-
-		int cantidad = colaBloqueados.getSize();
-
-		for (int i = 0; i < cantidad; i++) {
+		int n = colaBloqueados.getSize();
+		for (int i = 0; i < n; i++) {
 			PCB p = colaBloqueados.desencolar();
-			boolean lockObtenido = intentarLock(p);
-
-			if (lockObtenido) {
-				p.setEstado("EJECUTANDO (E/S)");
+			if (intentarAdquirirLock(p)) {
+				p.setEstado("LISTO (E/S)");
 				colaES.encolar(p);
-				System.out.println("--> Proceso " + p.getId() + " DESBLOQUEADO. Pasó a la Cola de E/S.");
 			} else {
-				colaBloqueados.encolar(p); // Vuelve al final de la cola
+				colaBloqueados.encolar(p);
 			}
 		}
 	}
 
 	private void procesarListos() {
-		if (!colaListos.estaVacia()) {
-			PCB p = colaListos.desencolar();
-			boolean lockObtenido = intentarLock(p);
+		if (colaListos.estaVacia()) {
+			return;
+		}
 
-			if (lockObtenido) {
-				p.setEstado("EJECUTANDO (E/S)");
+		int cantidadListos = colaListos.getSize();
+
+		for (int i = 0; i < cantidadListos; i++) {
+			PCB p = colaListos.desencolar();
+
+			if (intentarAdquirirLock(p)) {
+				p.setEstado("ESPERANDO (E/S)"); // Esperando en la cola del disco
 				colaES.encolar(p);
-				System.out.println("--> Proceso " + p.getId() + " obtuvo LOCK de " + p.getArchivoObjetivo().getNombre() + ". Pasó a E/S.");
 			} else {
-				p.setEstado("BLOQUEADO");
+				p.setEstado("BLOQUEADO (LOCK)");
 				colaBloqueados.encolar(p);
-				System.out.println("--> Proceso " + p.getId() + " BLOQUEADO. El archivo " + p.getArchivoObjetivo().getNombre() + " está en uso.");
 			}
 		}
 	}
 
-	private boolean intentarLock(PCB p) {
-		if (p.getOperacion().equals("LEER")) {
-			return p.getArchivoObjetivo().adquirirLockLectura();
-		} else {
-			return p.getArchivoObjetivo().adquirirLockEscritura();
+	private boolean intentarAdquirirLock(PCB p) {
+		if (p.getArchivoObjetivo() == null) {
+			return true;
 		}
+		return p.getOperacion().equals("LEER")
+			? p.getArchivoObjetivo().adquirirLockLectura()
+			: p.getArchivoObjetivo().adquirirLockEscritura();
 	}
 
 	private void ejecutarOperacionDisco() {
-		if (!colaES.estaVacia()) {
+		if (colaES.estaVacia()) {
+			procesoActual = null;
+			return;
+		}
 
-			PCB p = null;
-			int[] refDireccion = {this.direccion};
+		int[] refDir = {this.direccion};
+		switch (politicaActiva) {
+			case "SSTF":
+				procesoActual = colaES.extraerSSTF(posicionCabezal);
+				break;
+			case "SCAN":
+				procesoActual = colaES.extraerSCAN(posicionCabezal, refDir);
+				this.direccion = refDir[0];
+				break;
+			case "C-SCAN":
+				procesoActual = colaES.extraerCSCAN(posicionCabezal);
+				break;
+			default: // FIFO por defecto
+				procesoActual = colaES.desencolar();
+		}
 
-			switch (politicaActiva) {
-				case "FIFO":
-					p = colaES.desencolar();
+		if (procesoActual != null) {
+			int destino = procesoActual.getBloqueDestino();
+			String op = procesoActual.getOperacion();
+			String nom = procesoActual.getNombreAux();
+
+			try {
+				while (posicionCabezal != destino) {
+					if (posicionCabezal < destino) {
+						posicionCabezal++;
+					} else {
+						posicionCabezal--;
+					}
+					// Pequeña pausa para que el usuario vea el cabezal moverse en la GUI
+					Thread.sleep(25);
+				}
+			} catch (InterruptedException e) {
+				System.out.println("Movimiento interrumpido.");
+				return;
+			}
+
+			registrarEnGUI("PENDIENTE", "Iniciando " + op + " de " + nom + " en bloque " + destino);
+
+			if (forzarFalloProximo && op.equals("CREAR")) {
+				registrarEnGUI("CRASH", "!!! FALLO CRÍTICO !!! Sistema interrumpido antes del Commit.");
+				this.forzarFalloProximo = false; // Resetear flag
+				this.simulando = false;          // Detener el hilo (muerte del sistema)
+				return;                          // Salir abruptamente sin hacer la operación real
+			}
+
+			switch (op) {
+				case "CREAR":
+					arbol.crearArchivo(nom, procesoActual.getTamanoAux(), "Admin", arbol.getRaiz());
 					break;
-				case "SSTF":
-					p = colaES.extraerSSTF(posicionCabezal);
+				case "CREAR_DIR":
+					arbol.getRaiz().agregarHijo(new NodeFS(nom, "Admin", arbol.getRaiz()));
 					break;
-				case "SCAN":
-					p = colaES.extraerSCAN(posicionCabezal, refDireccion);
-					this.direccion = refDireccion[0];
+				case "ELIMINAR":
+					arbol.eliminarArchivo(arbol.getRaiz(), nom);
 					break;
-				case "C-SCAN":
-					p = colaES.extraerCSCAN(posicionCabezal);
+				case "ACTUALIZAR":
+					if (procesoActual.getArchivoObjetivo() != null) {
+						arbol.actualizarNombreArchivo(procesoActual.getArchivoObjetivo(), nom);
+					}
 					break;
-				default:
-					p = colaES.desencolar();
+				case "LEER":
+					// La lectura solo requiere que el cabezal llegue al bloque (ya ocurrió arriba)
+					System.out.println("Lectura completada en bloque " + destino);
 					break;
 			}
 
-			if (p != null) {
-				System.out.println("-> [DISCO] Movimiento: de cilindro " + posicionCabezal + " a " + p.getBloqueDestino());
+			registrarEnGUI("CONFIRMADA", op + " de " + nom + " exitosa (COMMIT).");
 
-				posicionCabezal = p.getBloqueDestino();
-
-				p.setEstado("TERMINADO");
-				if (p.getOperacion().equals("LEER")) {
-					p.getArchivoObjetivo().liberarLockLectura();
+			if (procesoActual.getArchivoObjetivo() != null) {
+				if (op.equals("LEER")) {
+					procesoActual.getArchivoObjetivo().liberarLockLectura();
 				} else {
-					p.getArchivoObjetivo().liberarLockEscritura();
+					procesoActual.getArchivoObjetivo().liberarLockEscritura();
 				}
 			}
+
+			procesoActual.setEstado("TERMINADO");
+			procesoActual = null;
 		}
 	}
 
-	public void setPoliticaActiva(String politica) {
-		this.politicaActiva = politica;
-		System.out.println("Política de disco cambiada a: " + politica);
+	public void setForzarFalloProximo(boolean valor) {
+		this.forzarFalloProximo = valor;
 	}
 
-	public void detener() {
-		this.simulando = false;
+	private void registrarEnGUI(String tag, String mensaje) {
+		if (txtJournal != null) {
+			SwingUtilities.invokeLater(() -> txtJournal.append("[" + tag + "] " + mensaje + "\n"));
+		}
+	}
+
+	// Getters y Setters
+	public int getPosicionCabezal() {
+		return posicionCabezal;
+	}
+
+	public PCB getProcesoActual() {
+		return procesoActual;
+	}
+
+	public void setPoliticaActiva(String pol) {
+		this.politicaActiva = pol;
+	}
+
+	public void setPosicionCabezal(int pos) {
+		this.posicionCabezal = pos;
+	}
+
+	public void setSimulando(boolean s) {
+		this.simulando = s;
 	}
 }
