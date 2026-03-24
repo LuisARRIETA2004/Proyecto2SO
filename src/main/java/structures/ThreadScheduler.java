@@ -19,6 +19,7 @@ public class ThreadScheduler extends Thread {
 	private TreeFS.ArbolSistemaArchivos arbol;
 	private JTextArea txtJournal;
 	private PCB procesoActual;
+	private boolean forzarFalloProximo = false;
 	private boolean simulando;
 
 	public ThreadScheduler(newCustomQueue listos, newCustomQueue bloqueados, newCustomQueue es,
@@ -62,22 +63,24 @@ public class ThreadScheduler extends Thread {
 	}
 
 	private void procesarListos() {
-        if (colaListos.estaVacia()) return;
-        
-        int cantidadListos = colaListos.getSize();
-        
-        for (int i = 0; i < cantidadListos; i++) {
-            PCB p = colaListos.desencolar();
-            
-            if (intentarAdquirirLock(p)) {
-                p.setEstado("ESPERANDO (E/S)"); // Esperando en la cola del disco
-                colaES.encolar(p);
-            } else {
-                p.setEstado("BLOQUEADO (LOCK)");
-                colaBloqueados.encolar(p);
-            }
-        }
-    }
+		if (colaListos.estaVacia()) {
+			return;
+		}
+
+		int cantidadListos = colaListos.getSize();
+
+		for (int i = 0; i < cantidadListos; i++) {
+			PCB p = colaListos.desencolar();
+
+			if (intentarAdquirirLock(p)) {
+				p.setEstado("ESPERANDO (E/S)"); // Esperando en la cola del disco
+				colaES.encolar(p);
+			} else {
+				p.setEstado("BLOQUEADO (LOCK)");
+				colaBloqueados.encolar(p);
+			}
+		}
+	}
 
 	private boolean intentarAdquirirLock(PCB p) {
 		if (p.getArchivoObjetivo() == null) {
@@ -106,18 +109,39 @@ public class ThreadScheduler extends Thread {
 			case "C-SCAN":
 				procesoActual = colaES.extraerCSCAN(posicionCabezal);
 				break;
-			default:
+			default: // FIFO por defecto
 				procesoActual = colaES.desencolar();
 		}
 
 		if (procesoActual != null) {
-			posicionCabezal = procesoActual.getBloqueDestino();
-			procesoActual.setEstado("TERMINADO");
-
+			int destino = procesoActual.getBloqueDestino();
 			String op = procesoActual.getOperacion();
 			String nom = procesoActual.getNombreAux();
 
-			// EJECUCIÓN REAL DE LA OPERACIÓN
+			try {
+				while (posicionCabezal != destino) {
+					if (posicionCabezal < destino) {
+						posicionCabezal++;
+					} else {
+						posicionCabezal--;
+					}
+					// Pequeña pausa para que el usuario vea el cabezal moverse en la GUI
+					Thread.sleep(25);
+				}
+			} catch (InterruptedException e) {
+				System.out.println("Movimiento interrumpido.");
+				return;
+			}
+
+			registrarEnGUI("PENDIENTE", "Iniciando " + op + " de " + nom + " en bloque " + destino);
+
+			if (forzarFalloProximo && op.equals("CREAR")) {
+				registrarEnGUI("CRASH", "!!! FALLO CRÍTICO !!! Sistema interrumpido antes del Commit.");
+				this.forzarFalloProximo = false; // Resetear flag
+				this.simulando = false;          // Detener el hilo (muerte del sistema)
+				return;                          // Salir abruptamente sin hacer la operación real
+			}
+
 			switch (op) {
 				case "CREAR":
 					arbol.crearArchivo(nom, procesoActual.getTamanoAux(), "Admin", arbol.getRaiz());
@@ -128,19 +152,19 @@ public class ThreadScheduler extends Thread {
 				case "ELIMINAR":
 					arbol.eliminarArchivo(arbol.getRaiz(), nom);
 					break;
-				case "LEER":
-					System.out.println("Lectura completada: " + nom);
-					break;
-				case "ACTUALIZAR": // <--- NUEVO CASO AGREGADO
+				case "ACTUALIZAR":
 					if (procesoActual.getArchivoObjetivo() != null) {
 						arbol.actualizarNombreArchivo(procesoActual.getArchivoObjetivo(), nom);
 					}
 					break;
+				case "LEER":
+					// La lectura solo requiere que el cabezal llegue al bloque (ya ocurrió arriba)
+					System.out.println("Lectura completada en bloque " + destino);
+					break;
 			}
 
-			registrarEnGUI("CONFIRMADA", op + " de " + nom + " exitosa.");
+			registrarEnGUI("CONFIRMADA", op + " de " + nom + " exitosa (COMMIT).");
 
-			// Liberar Locks
 			if (procesoActual.getArchivoObjetivo() != null) {
 				if (op.equals("LEER")) {
 					procesoActual.getArchivoObjetivo().liberarLockLectura();
@@ -148,8 +172,14 @@ public class ThreadScheduler extends Thread {
 					procesoActual.getArchivoObjetivo().liberarLockEscritura();
 				}
 			}
+
+			procesoActual.setEstado("TERMINADO");
 			procesoActual = null;
 		}
+	}
+
+	public void setForzarFalloProximo(boolean valor) {
+		this.forzarFalloProximo = valor;
 	}
 
 	private void registrarEnGUI(String tag, String mensaje) {
