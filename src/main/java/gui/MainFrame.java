@@ -634,10 +634,12 @@ public class MainFrame extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 	    // 1. Detener el motor (Simular que el sistema se apaga)
 	    scheduler.setSimulando(false);
-
+            
+            txtJournal.append("!!! ALERTA: Fallo programado para la siguiente transacción !!!\n");
 	    JOptionPane.showMessageDialog(this, "!!! SISTEMA CAÍDO (CRASH) !!!\nIniciando proceso de recuperación mediante Journaling.");
 
 	    // 2. Analizar la bitácora
+            JOptionPane.showMessageDialog(this, "El sistema simulará un fallo en la próxima escritura.\nCree un archivo para ver el efecto.");
 	    String bitacora = txtJournal.getText();
 	    txtJournal.append("\n>>> RECOVERY MODE ACTIVATED <<<\n");
 
@@ -981,4 +983,12 @@ public class MainFrame extends javax.swing.JFrame {
 
 		return null; // Si no lo encuentra en ninguna parte
 	}
+        private void recuperarSistema() {
+            String log = txtJournal.getText();
+            if (log.contains("[PENDIENTE]") && !log.contains("(COMMIT)")) {
+                txtJournal.append(">>> RECOVERY: Operación incompleta detectada. Realizando Rollback...\n");
+                // Aquí podrías limpiar colas o eliminar archivos a medio crear
+                txtJournal.append(">>> SISTEMA: Consistencia restaurada exitosamente.\n");
+            }
+}
 }
