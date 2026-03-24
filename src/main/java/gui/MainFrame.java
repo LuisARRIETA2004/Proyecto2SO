@@ -523,6 +523,7 @@ public class MainFrame extends javax.swing.JFrame {
 		    colaListos.encolar(proceso);
 		    txtJournal.append("[PENDIENTE] Solicitud de acceso al bloque " + peticiones[i] + "\n");
 	    }
+	    scheduler.setPosicionCabezal(50);
     }//GEN-LAST:event_btnPruebaEstrasActionPerformed
 
     private void rbAdminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAdminActionPerformed
@@ -794,17 +795,47 @@ public class MainFrame extends javax.swing.JFrame {
 		jLabel6.setText(p != null ? "EJECUTANDO ID: " + p.getId() : "ID: --- (ESPERANDO)");
 
 		// 3. ACTUALIZAR TABLA DE PROCESOS
-		DefaultTableModel modelP = (DefaultTableModel) tableProcesos.getModel();
-		modelP.setRowCount(0);
-		if (p != null) {
-			modelP.addRow(new Object[]{p.getId(), p.getOperacion(), "EXEC", p.getBloqueDestino()});
-		}
-		for (int i = 0; i < colaListos.getSize(); i++) {
-			PCB waiting = colaListos.get(i);
-			if (waiting != null) {
-				modelP.addRow(new Object[]{waiting.getId(), waiting.getOperacion(), "READY", waiting.getBloqueDestino()});
-			}
-		}
+        DefaultTableModel modelP = (DefaultTableModel) tableProcesos.getModel();
+        modelP.setRowCount(0); // Limpiamos la tabla
+        
+        // 3.1. Proceso Ejecutándose actualmente
+        if (p != null) {
+            Object[] filaExec = {p.getId(), p.getOperacion(), "EJECUTANDO", p.getBloqueDestino()};
+            modelP.addRow(filaExec);
+        }
+        
+        // 3.2. Procesos recién creados (En RAM)
+        for (int i = 0; i < colaListos.getSize(); i++) {
+            PCB waiting = colaListos.get(i);
+            if (waiting != null) {
+                Object[] filaListos = {waiting.getId(), waiting.getOperacion(), "LISTO", waiting.getBloqueDestino()};
+                modelP.addRow(filaListos);
+            }
+        }
+        
+        // 3.3. Procesos esperando en el planificador de Disco
+        for (int i = 0; i < colaES.getSize(); i++) {
+            PCB waitingES = colaES.get(i);
+            if (waitingES != null) {
+                Object[] filaES = {waitingES.getId(), waitingES.getOperacion(), "ESPERANDO DISCO", waitingES.getBloqueDestino()};
+                modelP.addRow(filaES);
+            }
+        }
+
+	// 3.4. Procesos bloqueados por Lock (Semáforos)
+        for (int i = 0; i < colaBloqueados.getSize(); i++) {
+            PCB pBlocked = colaBloqueados.get(i);
+            if (pBlocked != null) {
+                Object[] filaBlocked = {
+                    pBlocked.getId(), 
+                    pBlocked.getOperacion(), 
+                    "BLOQUEADO (LOCK)", 
+                    pBlocked.getBloqueDestino()
+                };
+                modelP.addRow(filaBlocked);
+            }
+        }
+		
 
 		// 4. ACTUALIZAR TABLA FAT
 		DefaultTableModel modelF = (DefaultTableModel) tableFAT.getModel();

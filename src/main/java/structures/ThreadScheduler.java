@@ -64,7 +64,6 @@ public class ThreadScheduler extends Thread {
 	private void procesarListos() {
         if (colaListos.estaVacia()) return;
         
-        // Vaciamos TODOS los procesos de la cola de listos a la cola de E/S en un solo ciclo
         int cantidadListos = colaListos.getSize();
         
         for (int i = 0; i < cantidadListos; i++) {
