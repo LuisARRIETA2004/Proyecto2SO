@@ -4,69 +4,68 @@
  */
 package structures;
 
-import java.io.*;
-import java.util.Scanner;
+import classes.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Iterator;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import classes.*;
 
 public class SimuladorLoader {
 
-    public static void cargarEscenario(File archivo, Disk disco, TreeFS.ArbolSistemaArchivos arbol, newCustomQueue colaListos, ThreadScheduler scheduler) {
-        try (Scanner sc = new Scanner(archivo)) {
-            String seccionActual = "";
-
-            while (sc.hasNextLine()) {
-                String linea = sc.nextLine().trim();
+    public static void cargarEscenarioJSON(File archivo, Disk disco, TreeFS.ArbolSistemaArchivos arbol, newCustomQueue colaListos, ThreadScheduler scheduler) {
+        try {
+            String contenido = new String(Files.readAllBytes(Paths.get(archivo.getAbsolutePath())));
+            JSONObject json = new JSONObject(contenido);
+            
+            if (json.has("initial_head")) {
+                int head = json.getInt("initial_head");
+                scheduler.setPosicionCabezal(head);
+            }
+            
+            if (json.has("system_files")) {
+                JSONObject systemFiles = json.getJSONObject("system_files");
                 
-                // Saltar líneas vacías o comentarios
-                if (linea.isEmpty() || linea.startsWith("#")) continue;
-
-                // 1. Detectar Cabezal
-                if (linea.startsWith("HEAD:")) {
-                    int pos = Integer.parseInt(linea.split(":")[1].trim());
-                    scheduler.setPosicionCabezal(pos);
-                    continue;
-                }
-
-                // 2. Detectar cambios de sección
-                if (linea.equals("FILES:")) {
-                    seccionActual = "FILES";
-                    continue;
-                }
-                if (linea.equals("REQUESTS:")) {
-                    seccionActual = "REQUESTS";
-                    continue;
-                }
-
-                // 3. Procesar datos según la sección
-                String[] datos = linea.split(",");
-
-                if (seccionActual.equals("FILES")) {
-                    // Formato: nombre, inicio, bloques
-                    String nombre = datos[0].trim();
-                    int inicio = Integer.parseInt(datos[1].trim());
-                    int numBloques = Integer.parseInt(datos[2].trim());
+                Iterator<String> llaves = systemFiles.keys();
+                while (llaves.hasNext()) {
+                    String posStr = llaves.next();
+                    int bloqueInicio = Integer.parseInt(posStr);
                     
-                    // Ocupamos el disco físicamente en esa posición exacta
-                    disco.asignarArchivoEnPosicion(nombre, inicio, numBloques);
+                    JSONObject archivoObj = systemFiles.getJSONObject(posStr);
+                    String nombre = archivoObj.getString("name");
+                    int numBloques = archivoObj.getInt("blocks");
                     
-                    // Agregamos al árbol
-                    NodeFS nuevo = new NodeFS(nombre, "Sistema", numBloques, inicio, arbol.getRaiz());
-                    arbol.getRaiz().agregarHijo(nuevo);
+                    disco.asignarArchivoEnPosicion(nombre, bloqueInicio, numBloques);
                     
-                } else if (seccionActual.equals("REQUESTS")) {
-                    // Formato: operacion, bloque
-                    String op = datos[0].trim();
-                    int bloqueDestino = Integer.parseInt(datos[1].trim());
-
-                    // Creamos el PCB (ticket) y lo mandamos a la cola
-                    PCB p = new PCB(op, null, bloqueDestino, "Externo_" + bloqueDestino, 1);
-                    colaListos.encolar(p);
+                    NodeFS nuevoNodo = new NodeFS(nombre, "Sistema", numBloques, bloqueInicio, arbol.getRaiz());
+                    arbol.getRaiz().agregarHijo(nuevoNodo);
                 }
             }
-            System.out.println(">>> Escenario de texto cargado con éxito.");
+            
+            if (json.has("requests")) {
+                JSONArray requests = json.getJSONArray("requests");
+                for (int i = 0; i < requests.length(); i++) {
+                    JSONObject req = requests.getJSONObject(i);
+                    int pos = req.getInt("pos");
+                    String opJSON = req.getString("op");
+                    
+                    String opTraducida = opJSON;
+                    if (opJSON.equals("READ")) opTraducida = "LEER";
+                    else if (opJSON.equals("UPDATE")) opTraducida = "ACTUALIZAR";
+                    else if (opJSON.equals("DELETE")) opTraducida = "ELIMINAR";
+                    else if (opJSON.equals("CREATE")) opTraducida = "CREAR";
+
+                    PCB proceso = new PCB(opTraducida, null, pos, "Req_" + opTraducida + "_" + pos, 0);
+                    colaListos.encolar(proceso);
+                }
+            }
+            
+            System.out.println(">>> Escenario JSON cargado con éxito.");
 
         } catch (Exception e) {
-            System.err.println("Error procesando archivo de prueba: " + e.getMessage());
+            System.err.println("Error procesando archivo JSON: " + e.getMessage());
         }
     }
 }

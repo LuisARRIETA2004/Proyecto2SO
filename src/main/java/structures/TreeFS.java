@@ -54,6 +54,18 @@ public class ArbolSistemaArchivos {
         }
     }
 
+    // Método ACTUALIZAR ARCHIVO
+        public void actualizarNombreArchivo(NodeFS archivo, String nuevoNombre) {
+            archivo.setNombre(nuevoNombre);
+            
+            int bloqueActual = archivo.getBloqueInicial();
+            while (bloqueActual != -1) {
+                classes.Block b = disco.getBloques()[bloqueActual];
+                b.setPropietario(nuevoNombre);
+                bloqueActual = b.getSiguienteBloque();
+            }
+        }
+
     public NodeFS getRaiz() {
         return raiz;
         }
